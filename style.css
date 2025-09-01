@@ -185,6 +185,12 @@ body {
     margin-bottom: 30px;
 }
 
+/* 5컬럼 레이아웃 (4티어 + 무소속) */
+.tiers-5col {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+}
+
 .tier-column {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
@@ -221,7 +227,8 @@ body {
 
 /* 티어별 헤더 색상 */
 .tier-gold {
-    background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%);
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
 }
 
 .tier-red {
@@ -230,6 +237,10 @@ body {
 
 .tier-green {
     background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+}
+
+.tier-blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
 .tier-gray {
@@ -265,13 +276,14 @@ body {
 /* 멤버 카드 */
 .member-card {
     background: white;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     cursor: move;
     transition: all 0.3s;
     border: 2px solid transparent;
+    font-size: 0.9rem;
 }
 
 .member-card:hover {
@@ -286,12 +298,28 @@ body {
 
 /* 카드 티어별 색상 */
 .card-gold {
-    border-color: #ffd700;
+    border: 3px solid #ffd700;
     background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-gold::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 215, 0, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
 }
 
 .card-gold .member-name {
     color: #d4af37;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
 .card-red {
@@ -310,6 +338,15 @@ body {
 
 .card-green .member-name {
     color: #00b894;
+}
+
+.card-blue {
+    border-color: #4facfe;
+    background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+}
+
+.card-blue .member-name {
+    color: #4facfe;
 }
 
 .card-gray {
@@ -355,10 +392,35 @@ body {
 }
 
 .member-card-stats {
-    margin-bottom: 10px;
-    padding: 10px;
+    margin-bottom: 8px;
+    padding: 8px;
     background: rgba(0, 0, 0, 0.03);
-    border-radius: 8px;
+    border-radius: 6px;
+}
+
+.stats-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.stat-item-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+}
+
+.stat-item-compact .stat-label {
+    font-size: 0.7rem;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.stat-item-compact .stat-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
 }
 
 .stat-row {
@@ -390,12 +452,12 @@ body {
 
 .member-details-btn {
     width: 100%;
-    padding: 8px;
+    padding: 6px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
@@ -562,14 +624,26 @@ body {
 }
 
 /* 반응형 디자인 */
+@media (max-width: 1400px) {
+    .tiers-5col {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 @media (max-width: 1200px) {
     .tiers-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .tiers-5col {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 768px) {
     .tiers-container {
+        grid-template-columns: 1fr;
+    }
+    .tiers-5col {
         grid-template-columns: 1fr;
     }
     

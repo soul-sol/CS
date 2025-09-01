@@ -293,6 +293,7 @@ function getTierClass(tier) {
         case 'tier1': return 'card-gold';
         case 'tier2': return 'card-red';
         case 'tier3': return 'card-green';
+        case 'tier4': return 'card-blue';
         default: return 'card-gray';
     }
 }
