@@ -1,5 +1,12 @@
-// CS 클랜 홈페이지 JavaScript
-console.log('CS Clan Homepage loaded!');
+// CS 클랜 홈페이지 JavaScript - Firebase 버전
+console.log('CS Clan Homepage with Firebase loaded!');
+
+// Firebase는 index.html에서 이미 초기화됨
+const database = window.firebaseDB.database;
+const ref = window.firebaseDB.ref;
+const set = window.firebaseDB.set;
+const onValue = window.firebaseDB.onValue;
+const remove = window.firebaseDB.remove;
 
 // API 설정
 const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI4MjU3MDQyMC02OTQ4LTAxM2UtNDg5ZC00MjVkMGRiNDBlMGYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzU2NzIwODcwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii00OTcwY2YwOS0zY2RkLTRlYTUtYjVjMy01MGVmY2VlNzExOTYifQ.JNUWXi2YT78qtXFkTHHiQtCaMIXqKTQRSWwRtimeI94';
@@ -16,33 +23,15 @@ const selectedMemberInfo = document.getElementById('selectedMemberInfo');
 const loadingIndicator = document.getElementById('loadingIndicator');
 const errorMessage = document.getElementById('errorMessage');
 
-// 멤버 목록 (로컬 스토리지에 저장)
-let members = [];
+// 멤버 목록
+let members = {};
 let selectedMember = null;
 
-// 초기화
-document.addEventListener('DOMContentLoaded', () => {
-    // 이전 URL의 데이터 마이그레이션 (한 번만 실행)
-    if (!localStorage.getItem('data_migrated')) {
-        // 기본 멤버 추가 (CS 클랜 주요 멤버)
-        const defaultMembers = ['CS_COSMOS', 'CS_LAST'];
-        
-        // 마이그레이션 완료 표시
-        localStorage.setItem('data_migrated', 'true');
-        
-        console.log('초기 멤버 설정을 추가할 수 있습니다.');
-    }
-    
-    loadMembersFromStorage();
+// Firebase 실시간 리스너
+onValue(ref(database, 'members'), (snapshot) => {
+    members = snapshot.val() || {};
     updateMemberList();
 });
-
-// 이벤트 리스너
-addMemberBtn.addEventListener('click', addMember);
-playerSearchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addMember();
-});
-clearAllBtn.addEventListener('click', clearAllMembers);
 
 // 멤버 추가
 async function addMember() {
@@ -54,7 +43,11 @@ async function addMember() {
     }
     
     // 중복 체크
-    if (members.some(m => m.name.toLowerCase() === playerName.toLowerCase())) {
+    const isDuplicate = Object.values(members).some(m => 
+        m.name.toLowerCase() === playerName.toLowerCase()
+    );
+    
+    if (isDuplicate) {
         showError('이미 추가된 플레이어입니다.');
         return;
     }
@@ -84,17 +77,16 @@ async function addMember() {
                     name: player.attributes.name,
                     clanId: player.attributes.clanId,
                     matches: player.relationships.matches.data.length,
-                    addedAt: new Date().toISOString()
+                    addedAt: new Date().toISOString(),
+                    addedBy: navigator.userAgent.substring(0, 50) // 간단한 식별자
                 };
                 
                 // 시즌 통계 가져오기
                 const stats = await fetchPlayerStats(player.id);
                 memberData.stats = stats;
                 
-                // 멤버 추가
-                members.push(memberData);
-                saveMembersToStorage();
-                updateMemberList();
+                // Firebase에 저장
+                set(ref(database, 'members/' + player.id), memberData);
                 
                 // 입력창 초기화
                 playerSearchInput.value = '';
@@ -118,7 +110,7 @@ async function addMember() {
 // 플레이어 통계 가져오기
 async function fetchPlayerStats(playerId) {
     try {
-        const seasonId = 'division.bro.official.pc-2018-29'; // 최신 시즌
+        const seasonId = 'division.bro.official.pc-2018-29';
         const response = await fetch(
             `${API_BASE_URL}/players/${playerId}/seasons/${seasonId}`,
             {
@@ -133,7 +125,6 @@ async function fetchPlayerStats(playerId) {
             const data = await response.json();
             const gameModeStats = data.data.attributes.gameModeStats;
             
-            // 스쿼드 통계 우선
             const modes = ['squad-fpp', 'squad', 'duo-fpp', 'duo', 'solo-fpp', 'solo'];
             for (const mode of modes) {
                 if (gameModeStats[mode] && gameModeStats[mode].roundsPlayed > 0) {
@@ -247,25 +238,22 @@ function selectMember(member) {
 
 // 멤버 제거
 function removeMember(memberId) {
-    members = members.filter(m => m.id !== memberId);
-    saveMembersToStorage();
-    updateMemberList();
-    
-    // 제거된 멤버가 선택된 상태였다면 초기 화면으로
-    if (selectedMember && selectedMember.id === memberId) {
-        selectedMember = null;
-        selectedMemberInfo.classList.add('hidden');
-        welcomeScreen.classList.remove('hidden');
+    if (confirm('이 멤버를 삭제하시겠습니까?')) {
+        remove(ref(database, 'members/' + memberId));
+        
+        if (selectedMember && selectedMember.id === memberId) {
+            selectedMember = null;
+            selectedMemberInfo.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+        }
     }
 }
 
 // 전체 멤버 삭제
 function clearAllMembers() {
     if (confirm('모든 멤버를 삭제하시겠습니까?')) {
-        members = [];
+        remove(ref(database, 'members'));
         selectedMember = null;
-        saveMembersToStorage();
-        updateMemberList();
         selectedMemberInfo.classList.add('hidden');
         welcomeScreen.classList.remove('hidden');
     }
@@ -275,7 +263,7 @@ function clearAllMembers() {
 function updateMemberList() {
     memberListContent.innerHTML = '';
     
-    members.forEach(member => {
+    Object.values(members).forEach(member => {
         const memberItem = document.createElement('div');
         memberItem.className = 'member-item';
         memberItem.dataset.memberId = member.id;
@@ -297,20 +285,7 @@ function updateMemberList() {
     });
     
     // 멤버 수 업데이트
-    memberCountEl.textContent = members.length;
-}
-
-// 로컬 스토리지 저장
-function saveMembersToStorage() {
-    localStorage.setItem('cs_clan_members', JSON.stringify(members));
-}
-
-// 로컬 스토리지에서 불러오기
-function loadMembersFromStorage() {
-    const stored = localStorage.getItem('cs_clan_members');
-    if (stored) {
-        members = JSON.parse(stored);
-    }
+    memberCountEl.textContent = Object.keys(members).length;
 }
 
 // UI 헬퍼 함수
@@ -332,5 +307,12 @@ function hideError() {
     errorMessage.classList.add('hidden');
 }
 
-// 전역 함수로 등록 (인라인 onclick용)
+// 이벤트 리스너
+addMemberBtn.addEventListener('click', addMember);
+playerSearchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addMember();
+});
+clearAllBtn.addEventListener('click', clearAllMembers);
+
+// 전역 함수로 등록
 window.removeMember = removeMember;
