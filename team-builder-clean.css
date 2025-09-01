@@ -1,0 +1,378 @@
+/* Team Builder Page Specific Styles - Clean Version */
+
+/* 멤버 선택 섹션 */
+.member-selection {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.member-selection h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.selection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.selection-info {
+    font-size: 0.95rem;
+    color: #495057;
+}
+
+.selected-count {
+    font-weight: 700;
+    color: #339af0;
+    font-size: 1.1rem;
+}
+
+.selection-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-select-all,
+.btn-deselect-all {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-select-all:hover,
+.btn-deselect-all:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+/* 티어 섹션 */
+.tier-section {
+    margin-bottom: 20px;
+}
+
+.tier-section h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: white;
+    display: inline-block;
+}
+
+.tier-gold h3 {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.tier-red h3 {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.tier-green h3 {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.tier-blue h3 {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.tier-gray h3 {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+/* 멤버 리스트 */
+.member-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.member-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.member-checkbox:hover {
+    background: #e9ecef;
+}
+
+.member-checkbox input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.member-checkbox label {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #495057;
+    flex: 1;
+}
+
+.member-checkbox.selected {
+    background: #e7f5ff;
+    border: 1px solid #74c0fc;
+}
+
+/* 팀 구성 옵션 */
+.team-options {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.team-options h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.option-group {
+    margin-bottom: 15px;
+}
+
+.option-group label {
+    display: block;
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.team-count-input {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.team-count-input:focus {
+    outline: none;
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.1);
+}
+
+.option-description {
+    font-size: 0.8rem;
+    color: #868e96;
+    margin-left: 5px;
+}
+
+.option-checkbox {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.option-checkbox input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.option-checkbox label {
+    font-size: 0.9rem;
+    color: #495057;
+    cursor: pointer;
+}
+
+/* 팀 생성 버튼 */
+.btn-generate {
+    width: 100%;
+    padding: 12px;
+    background: #339af0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-generate:hover {
+    background: #228be6;
+}
+
+.btn-generate:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+}
+
+/* 팀 결과 */
+.team-results {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.team-results h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.result-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.btn-reshuffle,
+.btn-copy {
+    padding: 8px 16px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reshuffle:hover,
+.btn-copy:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+/* 팀 그리드 */
+.teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.team-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.team-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.team-members {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.team-member {
+    padding: 6px 10px;
+    background: white;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tier-badge {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+}
+
+.badge-tier1 {
+    background: #f59e0b;
+}
+
+.badge-tier2 {
+    background: #ef4444;
+}
+
+.badge-tier3 {
+    background: #10b981;
+}
+
+.badge-tier4 {
+    background: #3b82f6;
+}
+
+.badge-unassigned {
+    background: #6b7280;
+}
+
+/* 팀 통계 */
+.team-stats {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+    font-size: 0.85rem;
+    color: #868e96;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+}
+
+/* 로딩 상태 */
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    color: #868e96;
+    font-size: 0.95rem;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f4f6;
+    border-top: 2px solid #339af0;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 빈 상태 */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #868e96;
+    font-size: 0.95rem;
+}
+
+.no-members {
+    padding: 20px;
+    text-align: center;
+    color: #868e96;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}

@@ -1,0 +1,247 @@
+/* Members Page Specific Styles - Clean Version */
+
+/* 상태 요약 */
+.status-summary {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.status-summary h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.status-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.status-card {
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+}
+
+.status-card.online {
+    background: #e6fcf5;
+    border: 1px solid #63e6be;
+}
+
+.status-card.offline {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.status-count {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.status-card.online .status-count {
+    color: #12b886;
+}
+
+.status-card.offline .status-count {
+    color: #868e96;
+}
+
+.status-label {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+/* 멤버 리스트 섹션 */
+.members-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.members-section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+/* 멤버 리스트 */
+.members-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
+}
+
+/* 멤버 카드 (심플) */
+.member-simple-card {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    gap: 12px;
+}
+
+.member-simple-card:hover {
+    background: #e9ecef;
+    transform: translateX(4px);
+}
+
+/* 상태 점 */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-dot.online {
+    background: #12b886;
+    box-shadow: 0 0 8px rgba(18, 184, 134, 0.5);
+}
+
+.status-dot.offline {
+    background: #adb5bd;
+}
+
+/* 멤버 이름 */
+.member-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #2c3e50;
+    flex: 1;
+}
+
+/* 티어 뱃지 */
+.tier-badge {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    color: white;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.tier-badge.tier1 {
+    background: #f59e0b;
+}
+
+.tier-badge.tier2 {
+    background: #ef4444;
+}
+
+.tier-badge.tier3 {
+    background: #10b981;
+}
+
+.tier-badge.tier4 {
+    background: #3b82f6;
+}
+
+.tier-badge.unassigned {
+    background: #6b7280;
+}
+
+/* 상태 토글 버튼 */
+.status-toggle {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.status-btn {
+    padding: 4px 10px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #495057;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.status-btn:hover {
+    background: #f8f9fa;
+}
+
+.status-btn.active {
+    color: white;
+    border-color: transparent;
+}
+
+.status-btn.online.active {
+    background: #12b886;
+}
+
+.status-btn.offline.active {
+    background: #868e96;
+}
+
+/* 빈 상태 */
+.no-members {
+    text-align: center;
+    padding: 40px;
+    color: #868e96;
+    font-size: 0.95rem;
+}
+
+.no-members-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+/* 로딩 상태 */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #868e96;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #339af0;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .status-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .members-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .member-simple-card {
+        padding: 10px;
+    }
+    
+    .tier-badge {
+        display: none;
+    }
+}
