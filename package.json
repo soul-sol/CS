@@ -1,0 +1,16 @@
+{
+  "name": "battleground-clan-homepage",
+  "version": "1.0.0",
+  "description": "PUBG 클랜 정보 조회 홈페이지",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080",
+    "dev": "npx http-server -p 8080"
+  },
+  "keywords": ["pubg", "battlegrounds", "clan"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
