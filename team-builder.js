@@ -73,8 +73,14 @@ function displayMembers() {
         tier: m.tier
     })));
     
-    // 모든 멤버를 티어별로 그룹화 (온라인 필터 제거)
+    // 온라인 멤버만 티어별로 그룹화
     Object.values(members).forEach(member => {
+        // 오프라인 멤버는 제외
+        if (member.status && member.status !== 'online') {
+            console.log(`Filtered out offline member: ${member.name}, status: ${member.status}`);
+            return;
+        }
+        
         const tier = member.tier || 'unassigned';
         if (tierGroups[tier]) {
             tierGroups[tier].push(member);

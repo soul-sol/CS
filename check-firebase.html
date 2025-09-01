@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase 데이터 확인</title>
+</head>
+<body>
+    <h1>Firebase 멤버 데이터 확인</h1>
+    <button onclick="checkData()">데이터 확인</button>
+    <pre id="result"></pre>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDf7Kz5H6lCXmzFDXjqcb0mVNjmmnPvxRs",
+            authDomain: "countshot-clan.firebaseapp.com",
+            databaseURL: "https://countshot-clan-default-rtdb.firebaseio.com",
+            projectId: "countshot-clan",
+            storageBucket: "countshot-clan.firebasestorage.app",
+            messagingSenderId: "176589021893",
+            appId: "1:176589021893:web:c17bb73c1e3d2f77e7e85f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.checkData = function() {
+            const resultDiv = document.getElementById('result');
+            
+            onValue(ref(database, 'members'), (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    resultDiv.textContent = '=== Firebase 멤버 데이터 ===\n\n';
+                    
+                    Object.entries(data).forEach(([id, member]) => {
+                        resultDiv.textContent += `멤버: ${member.name}\n`;
+                        resultDiv.textContent += `  티어: ${member.tier}\n`;
+                        resultDiv.textContent += `  상태: ${member.status || 'unknown'}\n`;
+                        
+                        if (member.stats) {
+                            resultDiv.textContent += `  통계:\n`;
+                            resultDiv.textContent += `    K/D: ${member.stats.kd || 'N/A'}\n`;
+                            resultDiv.textContent += `    평균 데미지: ${member.stats.avgDamage || 'N/A'}\n`;
+                            resultDiv.textContent += `    승리: ${member.stats.wins || 'N/A'}\n`;
+                            resultDiv.textContent += `    킬: ${member.stats.kills || 'N/A'}\n`;
+                            resultDiv.textContent += `    게임 수: ${member.stats.roundsPlayed || 'N/A'}\n`;
+                            
+                            // squad 객체가 있는지 확인
+                            if (member.stats.squad) {
+                                resultDiv.textContent += `  Squad 통계:\n`;
+                                resultDiv.textContent += `    K/D: ${member.stats.squad.kd || 'N/A'}\n`;
+                                resultDiv.textContent += `    평균 데미지: ${member.stats.squad.avgDamage || 'N/A'}\n`;
+                            }
+                        } else {
+                            resultDiv.textContent += `  통계: 없음\n`;
+                        }
+                        
+                        resultDiv.textContent += `  추가일: ${member.addedAt}\n`;
+                        resultDiv.textContent += `  마지막 업데이트: ${member.lastStatsUpdate || 'N/A'}\n`;
+                        resultDiv.textContent += '\n-------------------\n\n';
+                    });
+                    
+                    // JSON 전체 데이터도 표시
+                    resultDiv.textContent += '\n\n=== 전체 JSON 데이터 ===\n';
+                    resultDiv.textContent += JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.textContent = '데이터가 없습니다.';
+                }
+            }, (error) => {
+                resultDiv.textContent = '에러: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>
