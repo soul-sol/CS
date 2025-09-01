@@ -73,18 +73,20 @@ function displayMembers() {
         tier: m.tier
     })));
     
-    // 온라인 멤버만 필터링하여 티어별로 그룹화
+    // 모든 멤버를 티어별로 그룹화 (온라인 필터 제거)
     Object.values(members).forEach(member => {
-        // 오프라인 멤버는 제외
-        if (member.status !== 'online') {
-            console.log(`Filtered out offline member: ${member.name}, status: ${member.status}`);
-            return;
-        }
-        
         const tier = member.tier || 'unassigned';
         if (tierGroups[tier]) {
             tierGroups[tier].push(member);
         }
+    });
+    
+    console.log('Tier groups:', {
+        tier1: tierGroups.tier1.length,
+        tier2: tierGroups.tier2.length,
+        tier3: tierGroups.tier3.length,
+        tier4: tierGroups.tier4.length,
+        unassigned: tierGroups.unassigned.length
     });
     
     // 각 티어별로 체크박스 생성
