@@ -1,0 +1,351 @@
+/* Members Page Ultimate Styles */
+
+/* Status Summary */
+.status-summary {
+    background: linear-gradient(135deg, rgba(20, 25, 37, 0.9), rgba(30, 35, 50, 0.9));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow-card);
+    animation: fadeInDown 0.6s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-summary h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.status-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.status-card {
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.status-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    animation: slideAcross 3s linear infinite;
+}
+
+.status-card:hover {
+    transform: translateY(-5px);
+}
+
+.status-card.online {
+    background: linear-gradient(135deg, rgba(57, 255, 20, 0.2), rgba(0, 210, 211, 0.2));
+    border: 1px solid rgba(57, 255, 20, 0.5);
+    box-shadow: 0 5px 20px rgba(57, 255, 20, 0.3);
+}
+
+.status-card.offline {
+    background: linear-gradient(135deg, rgba(99, 110, 114, 0.2), rgba(149, 175, 192, 0.2));
+    border: 1px solid rgba(149, 175, 192, 0.5);
+    box-shadow: 0 5px 20px rgba(149, 175, 192, 0.2);
+}
+
+.status-count {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.status-card.online .status-count {
+    background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.status-card.offline .status-count {
+    color: var(--text-muted);
+}
+
+.status-label {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* Members Section */
+.members-section {
+    background: linear-gradient(135deg, rgba(20, 25, 37, 0.9), rgba(30, 35, 50, 0.9));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(153, 69, 255, 0.3);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: var(--shadow-card);
+    animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+
+.members-section h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(153, 69, 255, 0.3);
+}
+
+/* Members List */
+.members-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+/* Member Card */
+.member-simple-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: rgba(10, 14, 26, 0.5);
+    border: 1px solid rgba(153, 69, 255, 0.2);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.member-simple-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
+    transition: left 0.5s ease;
+}
+
+.member-simple-card:hover::before {
+    left: 100%;
+}
+
+.member-simple-card:hover {
+    background: rgba(153, 69, 255, 0.1);
+    border-color: rgba(153, 69, 255, 0.5);
+    transform: translateX(5px);
+    box-shadow: -5px 0 20px rgba(153, 69, 255, 0.3);
+}
+
+/* Status Dot */
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.status-dot.online {
+    background: var(--neon-green);
+    box-shadow: 0 0 15px var(--neon-green);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 15px var(--neon-green);
+    }
+    50% {
+        box-shadow: 0 0 30px var(--neon-green), 0 0 50px var(--neon-green);
+    }
+}
+
+.status-dot.offline {
+    background: var(--text-muted);
+    opacity: 0.5;
+}
+
+/* Member Name */
+.member-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Tier Badge */
+.tier-badge {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 10px;
+}
+
+.tier-badge.tier1 {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.4);
+}
+
+.tier-badge.tier2 {
+    background: linear-gradient(135deg, #ff4757, #ff6b6b);
+    box-shadow: 0 2px 10px rgba(255, 71, 87, 0.4);
+}
+
+.tier-badge.tier3 {
+    background: linear-gradient(135deg, #00d2d3, #39ff14);
+    box-shadow: 0 2px 10px rgba(0, 210, 211, 0.4);
+}
+
+.tier-badge.tier4 {
+    background: linear-gradient(135deg, #00d4ff, #0984e3);
+    box-shadow: 0 2px 10px rgba(0, 212, 255, 0.4);
+}
+
+.tier-badge.unassigned {
+    background: linear-gradient(135deg, #636e72, #95afc0);
+    box-shadow: 0 2px 10px rgba(149, 175, 192, 0.4);
+}
+
+/* Status Toggle */
+.status-toggle {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.status-btn {
+    font-family: 'Exo 2', sans-serif;
+    padding: 6px 12px;
+    background: rgba(10, 14, 26, 0.5);
+    color: var(--text-secondary);
+    border: 1px solid rgba(153, 69, 255, 0.3);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.status-btn:hover {
+    background: rgba(153, 69, 255, 0.2);
+    border-color: rgba(153, 69, 255, 0.5);
+}
+
+.status-btn.active {
+    color: white;
+    border-color: transparent;
+}
+
+.status-btn.online.active {
+    background: linear-gradient(135deg, var(--neon-green), rgba(0, 210, 211, 0.8));
+    box-shadow: 0 3px 15px rgba(57, 255, 20, 0.4);
+}
+
+.status-btn.offline.active {
+    background: linear-gradient(135deg, rgba(99, 110, 114, 0.8), rgba(149, 175, 192, 0.8));
+    box-shadow: 0 3px 15px rgba(149, 175, 192, 0.3);
+}
+
+/* Empty State */
+.no-members {
+    text-align: center;
+    padding: 50px;
+    color: var(--text-muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.1rem;
+}
+
+.no-members-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    opacity: 0.3;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 50px;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(153, 69, 255, 0.2);
+    border-top: 4px solid var(--neon-purple);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .status-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .members-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .member-simple-card {
+        padding: 12px;
+    }
+    
+    .tier-badge {
+        display: none;
+    }
+    
+    .status-toggle {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .status-btn {
+        width: 100%;
+    }
+}
