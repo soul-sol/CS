@@ -154,25 +154,6 @@ async function addMember() {
 // 플레이어 통계 가져오기
 async function fetchPlayerStats(playerId) {
     try {
-        // 데모 데이터 반환 (API 키 문제 해결 전까지)
-        console.log('Using demo stats for player:', playerId);
-        return {
-            kd: (Math.random() * 3 + 0.5).toFixed(2), // 0.5 ~ 3.5
-            avgDamage: Math.floor(Math.random() * 300 + 100), // 100 ~ 400
-            wins: Math.floor(Math.random() * 50),
-            kills: Math.floor(Math.random() * 500),
-            deaths: Math.floor(Math.random() * 300),
-            assists: Math.floor(Math.random() * 200),
-            damageDealt: Math.floor(Math.random() * 100000),
-            roundsPlayed: Math.floor(Math.random() * 200 + 50),
-            winRate: (Math.random() * 20 + 5).toFixed(1),
-            headshotRate: (Math.random() * 30 + 10).toFixed(1),
-            avgKills: (Math.random() * 2 + 0.5).toFixed(1),
-            isRanked: false,
-            rankInfo: null
-        };
-        
-        /* 원본 코드 - API 키 수정 후 주석 해제
         // 현재 랭크 시즌 ID (시즌 29 - 2024)
         const currentSeasonId = 'division.bro.official.pc-2018-29';
         
@@ -272,7 +253,6 @@ async function fetchPlayerStats(playerId) {
         const extractedStats = extractDetailedStats(mainStats);
         console.log('Extracted season stats:', extractedStats);
         return extractedStats;
-        */
         
     } catch (error) {
         console.error('Error fetching player stats:', error);
@@ -284,7 +264,7 @@ async function fetchPlayerStats(playerId) {
 function extractDetailedStats(modeStats, isRanked = false) {
     const rounds = modeStats.roundsPlayed || 0;
     const kills = modeStats.kills || 0;
-    const deaths = modeStats.deaths || modeStats.losses || rounds; // deaths 우선, 없으면 losses, 그것도 없으면 rounds
+    const deaths = modeStats.deaths || 0; // deaths 직접 사용
     const damage = modeStats.damageDealt || 0;
     const wins = modeStats.wins || 0;
     const assists = modeStats.assists || 0;
