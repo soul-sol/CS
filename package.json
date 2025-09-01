@@ -7,10 +7,17 @@
     "start": "npx http-server -p 8080",
     "dev": "npx http-server -p 8080"
   },
-  "keywords": ["pubg", "battlegrounds", "clan"],
+  "keywords": [
+    "pubg",
+    "battlegrounds",
+    "clan"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
   }
 }
