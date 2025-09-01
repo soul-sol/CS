@@ -858,50 +858,320 @@ body::after {
     100% { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
+/* Responsive Design - Mobile Optimized */
+
+/* Tablet View */
 @media (max-width: 1200px) {
     .tiers-container,
     .tiers-5col {
         grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
     }
 }
 
+/* Mobile Landscape & Small Tablet */
 @media (max-width: 768px) {
-    .page-title {
-        font-size: 1.5rem;
+    body {
+        padding: 10px;
     }
     
-    .tiers-container,
-    .tiers-5col {
-        grid-template-columns: repeat(2, 1fr);
+    .container {
+        padding: 10px;
     }
     
+    /* Header Mobile */
     .main-header {
-        padding: 15px 20px;
+        padding: 15px;
+        border-radius: 15px;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .header-logo-gif {
+        height: 50px;
+    }
+    
+    .page-title {
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .subtitle {
+        font-size: 0.75rem;
     }
     
     .header-stats {
-        display: none;
+        width: 100%;
+        justify-content: space-around;
     }
-}
-
-@media (max-width: 480px) {
-    .tiers-container,
-    .tiers-5col {
-        grid-template-columns: 1fr;
+    
+    .stat-item {
+        padding: 8px 12px;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+    
+    /* Navigation Mobile */
+    .nav-links,
+    .header-nav {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    
+    .nav-link {
+        flex: 1;
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+    
+    /* Member Add Section Mobile */
+    .member-add-section {
+        padding: 15px;
+        border-radius: 12px;
     }
     
     .search-container {
         flex-direction: column;
+        gap: 10px;
     }
     
-    .search-input,
+    .search-input {
+        width: 100%;
+        padding: 12px 15px;
+        font-size: 1rem;
+    }
+    
     .add-member-btn {
         width: 100%;
+        padding: 12px;
+        font-size: 0.95rem;
     }
     
+    /* Tiers Mobile */
+    .tiers-container,
+    .tiers-5col {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .tier-column {
+        min-height: 350px;
+        border-radius: 12px;
+    }
+    
+    .tier-header {
+        padding: 12px;
+        font-size: 0.75rem;
+    }
+    
+    .tier-icon {
+        font-size: 1.1rem;
+    }
+    
+    /* Member Cards Mobile */
+    .member-card {
+        padding: 10px;
+        margin-bottom: 6px;
+    }
+    
+    .member-name {
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .member-remove {
+        width: 20px;
+        height: 20px;
+        font-size: 1rem;
+    }
+    
+    .stats-grid-compact {
+        gap: 8px;
+    }
+    
+    .stat-item-compact {
+        padding: 6px;
+    }
+    
+    .stat-item-compact .stat-label {
+        font-size: 0.6rem;
+    }
+    
+    .stat-item-compact .stat-value {
+        font-size: 0.75rem;
+    }
+    
+    .member-details-btn {
+        padding: 6px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+    /* Single Column Layout */
+    .tiers-container,
+    .tiers-5col {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    /* Compact Header */
+    .main-header {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .header-logo-gif {
+        height: 40px;
+    }
+    
+    .page-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Hide Stats on Small Mobile */
+    .header-stats {
+        display: none;
+    }
+    
+    /* Stack Navigation */
     .nav-links,
     .header-nav {
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .nav-link {
+        width: 100%;
+        padding: 10px;
+    }
+    
+    /* Tier Adjustments */
+    .tier-column {
+        min-height: 300px;
+    }
+    
+    .tier-content {
+        padding: 10px;
+    }
+    
+    /* Optimize Animations for Mobile */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation: none !important;
+            transition: none !important;
+        }
+    }
+}
+
+/* Ultra Small Mobile */
+@media (max-width: 360px) {
+    .page-title {
+        font-size: 1rem;
+    }
+    
+    .member-name {
+        font-size: 0.85rem;
+    }
+    
+    .tier-header {
+        font-size: 0.7rem;
+        padding: 10px;
+    }
+    
+    .tier-icon {
+        font-size: 1rem;
+    }
+    
+    .member-card {
+        padding: 8px;
+    }
+    
+    .stat-item-compact .stat-value {
+        font-size: 0.7rem;
+    }
+}
+
+/* Mobile Touch Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    /* Bigger Touch Targets */
+    .nav-link,
+    .add-member-btn,
+    .member-details-btn,
+    .member-remove {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Remove Hover Effects on Touch Devices */
+    .member-card:hover,
+    .nav-link:hover,
+    .tier-column:hover {
+        transform: none;
+    }
+    
+    /* Simplify Animations */
+    .card-gold,
+    .card-red,
+    .card-green,
+    .card-blue {
+        animation: none;
+    }
+    
+    /* Better Spacing for Touch */
+    .member-card {
+        margin-bottom: 10px;
+    }
+    
+    .search-input {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}
+
+/* Landscape Mobile Optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+    .main-header {
+        padding: 10px 15px;
+    }
+    
+    .page-title {
+        font-size: 1.2rem;
+    }
+    
+    .tiers-container,
+    .tiers-5col {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .tier-column {
+        min-height: 280px;
+    }
+    
+    body {
+        padding: 8px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    /* Already dark theme by default */
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .member-card {
+        border: 2px solid white;
+    }
+    
+    .member-name {
+        font-weight: 900;
     }
 }
