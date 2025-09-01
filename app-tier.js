@@ -152,10 +152,41 @@ async function addMember() {
 // 플레이어 통계 가져오기
 async function fetchPlayerStats(playerId) {
     try {
-        // 현재 랭크 시즌 ID (시즌 29 - 2024)
-        const currentSeasonId = 'division.bro.official.pc-2018-29';
+        // 현재 랭크 시즌 ID (시즌 30 - 2024년 11월)
+        // 카카오 서버용 시즌 ID
+        const currentSeasonId = 'division.bro.official.pc-2018-30';
         
-        // 시즌 통계 가져오기
+        // 경쟁전(Ranked) 통계 먼저 시도
+        const rankedStatsResponse = await fetch(
+            `${API_BASE_URL}/players/${playerId}/seasons/${currentSeasonId}/ranked`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Accept': 'application/vnd.api+json'
+                }
+            }
+        );
+        
+        if (rankedStatsResponse.ok) {
+            // 경쟁전 통계 사용
+            const rankedData = await rankedStatsResponse.json();
+            const stats = rankedData.data.attributes.rankedGameModeStats;
+            
+            // 스쿼드 우선, 없으면 듀오, 솔로 순
+            const squadStats = stats['squad-fpp'] || stats['squad'] || {};
+            const duoStats = stats['duo-fpp'] || stats['duo'] || {};
+            const soloStats = stats['solo-fpp'] || stats['solo'] || {};
+            
+            const mainStats = squadStats.roundsPlayed > 0 ? squadStats : 
+                             duoStats.roundsPlayed > 0 ? duoStats : 
+                             soloStats;
+            
+            console.log('Using ranked stats');
+            return extractDetailedStats(mainStats);
+        }
+        
+        // 경쟁전 통계가 없으면 일반 시즌 통계 시도
+        console.log('Ranked stats not available, trying regular season stats...');
         const seasonStatsResponse = await fetch(
             `${API_BASE_URL}/players/${playerId}/seasons/${currentSeasonId}`,
             {
@@ -168,7 +199,7 @@ async function fetchPlayerStats(playerId) {
         
         if (!seasonStatsResponse.ok) {
             console.log('Season stats not available, trying lifetime stats...');
-            // 시즌 통계가 없으면 lifetime 통계 시도
+            // 일반 시즌 통계도 없으면 lifetime 통계 시도
             const lifetimeResponse = await fetch(
                 `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
                 {
