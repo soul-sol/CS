@@ -122,6 +122,7 @@ async function addMember() {
         // 시즌 통계 가져오기
         try {
             const stats = await fetchPlayerStats(player.id);
+            console.log('Player stats fetched:', stats);
             memberData.stats = stats;
         } catch (statsError) {
             console.error('Stats fetch error:', statsError);
@@ -187,18 +188,26 @@ async function fetchPlayerStats(playerId) {
 
 // 통계 추출
 function extractStats(modeStats) {
+    const rounds = modeStats.roundsPlayed || 0;
+    const kills = modeStats.kills || 0;
+    const damage = modeStats.damageDealt || 0;
+    const wins = modeStats.wins || 0;
+    
+    // K/D 계산 - 라운드가 0이면 0, 아니면 킬/라운드
+    const kdRatio = rounds > 0 ? (kills / rounds).toFixed(2) : '0.00';
+    
+    // 평균 데미지 계산
+    const avgDmg = rounds > 0 ? Math.round(damage / rounds) : 0;
+    
     return {
-        wins: modeStats.wins || 0,
-        kills: modeStats.kills || 0,
+        wins: wins,
+        kills: kills,
         assists: modeStats.assists || 0,
-        damageDealt: Math.round(modeStats.damageDealt || 0),
-        roundsPlayed: modeStats.roundsPlayed || 0,
-        kd: modeStats.roundsPlayed > 0 ? 
-            ((modeStats.kills || 0) / modeStats.roundsPlayed).toFixed(2) : '0.00',
-        avgDamage: modeStats.roundsPlayed > 0 ?
-            Math.round((modeStats.damageDealt || 0) / modeStats.roundsPlayed) : 0,
-        winRate: modeStats.roundsPlayed > 0 ? 
-            ((modeStats.wins || 0) / modeStats.roundsPlayed * 100).toFixed(1) : '0.0'
+        damageDealt: Math.round(damage),
+        roundsPlayed: rounds,
+        kd: kdRatio,
+        avgDamage: avgDmg,
+        winRate: rounds > 0 ? (wins / rounds * 100).toFixed(1) : '0.0'
     };
 }
 
@@ -258,26 +267,29 @@ function updateTierContent(element, memberList, tier) {
                 <button class="member-remove" onclick="removeMember('${member.id}')">×</button>
             </div>
             <div class="member-card-stats">
-                ${member.stats ? `
+                ${member.stats && member.stats.squad ? `
                     <div class="stats-grid-compact">
                         <div class="stat-item-compact">
                             <span class="stat-label">K/D</span>
-                            <span class="stat-value">${member.stats.squad.kd}</span>
+                            <span class="stat-value">${member.stats.squad.kd || '0.00'}</span>
                         </div>
                         <div class="stat-item-compact">
                             <span class="stat-label">DMG</span>
-                            <span class="stat-value">${member.stats.squad.avgDamage}</span>
-                        </div>
-                        <div class="stat-item-compact">
-                            <span class="stat-label">승률</span>
-                            <span class="stat-value">${member.stats.squad.winRate}%</span>
-                        </div>
-                        <div class="stat-item-compact">
-                            <span class="stat-label">게임</span>
-                            <span class="stat-value">${member.stats.squad.roundsPlayed}</span>
+                            <span class="stat-value">${member.stats.squad.avgDamage || 0}</span>
                         </div>
                     </div>
-                ` : '<p class="no-stats">통계 없음</p>'}
+                ` : `
+                    <div class="stats-grid-compact">
+                        <div class="stat-item-compact">
+                            <span class="stat-label">K/D</span>
+                            <span class="stat-value">0.00</span>
+                        </div>
+                        <div class="stat-item-compact">
+                            <span class="stat-label">DMG</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                    </div>
+                `}
             </div>
             <button class="member-details-btn" onclick="showMemberDetails('${member.id}')">상세</button>
         </div>
