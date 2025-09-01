@@ -145,8 +145,14 @@ function showMessage(text, type = 'info') {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM loaded, initializing Firebase...');
     
-    // Firebase 초기화
-    await initializeFirebase();
+    try {
+        // Firebase 초기화
+        await initializeFirebase();
+        console.log('Firebase initialization complete');
+    } catch (error) {
+        console.error('Failed to initialize Firebase:', error);
+        showMessage('Firebase 초기화 실패: ' + error.message, 'error');
+    }
 });
 
 // 전역 함수로 등록

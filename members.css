@@ -125,9 +125,12 @@
 
 .no-members {
     text-align: center;
-    color: #999;
-    padding: 40px;
-    font-size: 1rem;
+    color: #666;
+    padding: 60px 20px;
+    font-size: 1.2rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 10px;
+    border: 2px dashed #e0e0e0;
 }
 
 /* 네비게이션 스타일 */

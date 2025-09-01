@@ -181,21 +181,25 @@ body {
 .tiers-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 0 10px;
 }
 
 /* 5컬럼 레이아웃 (4티어 + 무소속) */
 .tiers-5col {
     grid-template-columns: repeat(5, 1fr);
-    gap: 15px;
+    gap: 12px;
 }
 
 .tier-column {
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
 }
 
 .tier-header {
@@ -249,10 +253,11 @@ body {
 
 /* 티어 콘텐츠 */
 .tier-content {
-    min-height: 400px;
-    padding: 15px;
+    flex: 1;
+    padding: 12px;
     background: #f8f9fa;
     transition: background-color 0.3s;
+    min-height: 280px;
 }
 
 .tier-content.drag-over {
