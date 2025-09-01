@@ -1,10 +1,9 @@
-// CountShot Members - 온라인 상태 관리
+// CountShot Members - 온라인/오프라인 상태 관리
 console.log('Members page loaded!');
 
 // Firebase 초기화 대기
 let database, ref, set, onValue, update;
 let members = {};
-let currentUserId = null;
 
 // Firebase가 로드될 때까지 대기
 function waitForFirebase() {
@@ -28,10 +27,7 @@ function waitForFirebase() {
 
 // DOM 요소
 const onlineCountElement = document.getElementById('onlineCount');
-const awayCountElement = document.getElementById('awayCount');
-const busyCountElement = document.getElementById('busyCount');
 const offlineCountElement = document.getElementById('offlineCount');
-const currentUserSelect = document.getElementById('currentUserSelect');
 const messageElement = document.getElementById('message');
 
 // Firebase 초기화 및 리스너 설정
@@ -44,19 +40,11 @@ async function initializeFirebase() {
         console.log('Firebase data received:', snapshot.val());
         members = snapshot.val() || {};
         updateMemberDisplay();
-        updateUserSelect();
         updateStatusCounts();
     }, (error) => {
         console.error('Firebase read error:', error);
         showMessage('데이터베이스 연결 오류: ' + error.message, 'error');
     });
-    
-    // 로컬 스토리지에서 현재 사용자 복원
-    const savedUserId = localStorage.getItem('currentUserId');
-    if (savedUserId && members[savedUserId]) {
-        currentUserId = savedUserId;
-        currentUserSelect.value = currentUserId;
-    }
 }
 
 // 멤버 표시 업데이트
@@ -94,210 +82,66 @@ function displayTierMembers(elementId, memberList) {
         return;
     }
     
+    // 온라인 멤버를 먼저 정렬
+    memberList.sort((a, b) => {
+        const aOnline = a.status === 'online' ? 0 : 1;
+        const bOnline = b.status === 'online' ? 0 : 1;
+        return aOnline - bOnline;
+    });
+    
     container.innerHTML = memberList.map(member => {
-        const status = member.status || 'offline';
-        const statusIcon = getStatusIcon(status);
-        const statusClass = getStatusClass(status);
-        const lastSeen = member.lastSeen ? formatLastSeen(member.lastSeen) : '알 수 없음';
-        const isCurrentUser = member.id === currentUserId;
+        const isOnline = member.status === 'online';
+        const statusIcon = isOnline ? '🟢' : '⚫';
+        const statusClass = isOnline ? 'member-online' : 'member-offline';
         
         return `
-            <div class="member-status-card ${statusClass} ${isCurrentUser ? 'current-user' : ''}">
-                <div class="member-status-header">
-                    <div class="member-info">
-                        <span class="status-indicator">${statusIcon}</span>
-                        <span class="member-name">${member.name}</span>
-                        ${isCurrentUser ? '<span class="you-badge">YOU</span>' : ''}
-                    </div>
-                    <div class="member-actions">
-                        ${isCurrentUser ? '' : `
-                            <button class="status-change-btn" onclick="changeMemberStatus('${member.id}')">
-                                상태변경
-                            </button>
-                        `}
-                    </div>
-                </div>
-                <div class="member-status-info">
-                    <div class="info-row">
-                        <span class="info-label">상태:</span>
-                        <span class="info-value">${getStatusText(status)}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">마지막 접속:</span>
-                        <span class="info-value">${lastSeen}</span>
-                    </div>
-                    ${member.statusMessage ? `
-                        <div class="info-row">
-                            <span class="info-label">메시지:</span>
-                            <span class="info-value">${member.statusMessage}</span>
-                        </div>
-                    ` : ''}
-                </div>
+            <div class="member-simple-card ${statusClass}" onclick="toggleMemberStatus('${member.id}')">
+                <span class="status-dot">${statusIcon}</span>
+                <span class="member-name">${member.name}</span>
                 ${member.stats ? `
-                    <div class="member-quick-stats">
-                        <span class="quick-stat">K/D: ${member.stats.squad.kd}</span>
-                        <span class="quick-stat">DMG: ${member.stats.squad.avgDamage}</span>
-                        <span class="quick-stat">승률: ${member.stats.squad.winRate}%</span>
-                    </div>
+                    <span class="member-kd">K/D: ${member.stats.squad.kd}</span>
                 ` : ''}
             </div>
         `;
     }).join('');
 }
 
-// 상태 아이콘 가져오기
-function getStatusIcon(status) {
-    switch(status) {
-        case 'online': return '🟢';
-        case 'away': return '🟡';
-        case 'busy': return '🔴';
-        default: return '⚫';
-    }
-}
-
-// 상태 클래스 가져오기
-function getStatusClass(status) {
-    switch(status) {
-        case 'online': return 'status-online';
-        case 'away': return 'status-away';
-        case 'busy': return 'status-busy';
-        default: return 'status-offline';
-    }
-}
-
-// 상태 텍스트 가져오기
-function getStatusText(status) {
-    switch(status) {
-        case 'online': return '온라인';
-        case 'away': return '자리비움';
-        case 'busy': return '게임중';
-        default: return '오프라인';
-    }
-}
-
-// 마지막 접속 시간 포맷
-function formatLastSeen(timestamp) {
-    if (!timestamp) return '알 수 없음';
+// 멤버 상태 토글
+async function toggleMemberStatus(memberId) {
+    const member = members[memberId];
+    if (!member) return;
     
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
+    const newStatus = member.status === 'online' ? 'offline' : 'online';
     
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    
-    if (minutes < 1) return '방금 전';
-    if (minutes < 60) return `${minutes}분 전`;
-    if (hours < 24) return `${hours}시간 전`;
-    if (days < 7) return `${days}일 전`;
-    
-    return date.toLocaleDateString('ko-KR');
-}
-
-// 사용자 선택 업데이트
-function updateUserSelect() {
-    const currentValue = currentUserSelect.value;
-    
-    currentUserSelect.innerHTML = '<option value="">선택하세요</option>';
-    
-    Object.values(members).forEach(member => {
-        const option = document.createElement('option');
-        option.value = member.id;
-        option.textContent = `${member.name} (${member.tier || 'unassigned'})`;
-        currentUserSelect.appendChild(option);
-    });
-    
-    if (currentValue) {
-        currentUserSelect.value = currentValue;
+    try {
+        await update(ref(database, 'members/' + memberId), {
+            status: newStatus,
+            lastSeen: new Date().toISOString()
+        });
+        
+        const statusText = newStatus === 'online' ? '온라인' : '오프라인';
+        showMessage(`${member.name}님이 ${statusText}으로 변경되었습니다.`, 'success');
+    } catch (error) {
+        console.error('Error toggling member status:', error);
+        showMessage('상태 변경 중 오류가 발생했습니다.', 'error');
     }
 }
 
 // 상태 카운트 업데이트
 function updateStatusCounts() {
-    const counts = {
-        online: 0,
-        away: 0,
-        busy: 0,
-        offline: 0
-    };
+    let onlineCount = 0;
+    let offlineCount = 0;
     
     Object.values(members).forEach(member => {
-        const status = member.status || 'offline';
-        if (counts.hasOwnProperty(status)) {
-            counts[status]++;
+        if (member.status === 'online') {
+            onlineCount++;
+        } else {
+            offlineCount++;
         }
     });
     
-    onlineCountElement.textContent = counts.online;
-    awayCountElement.textContent = counts.away;
-    busyCountElement.textContent = counts.busy;
-    offlineCountElement.textContent = counts.offline;
-}
-
-// 내 상태 설정
-async function setMyStatus(status) {
-    if (!currentUserId) {
-        showMessage('먼저 사용자를 선택해주세요.', 'error');
-        return;
-    }
-    
-    try {
-        const updates = {
-            status: status,
-            lastSeen: new Date().toISOString()
-        };
-        
-        // 상태 메시지 추가 (옵션)
-        if (status === 'busy') {
-            const message = prompt('게임중 메시지를 입력하세요 (선택사항):', '');
-            if (message) {
-                updates.statusMessage = message;
-            }
-        } else {
-            updates.statusMessage = '';
-        }
-        
-        await update(ref(database, 'members/' + currentUserId), updates);
-        showMessage(`상태가 ${getStatusText(status)}(으)로 변경되었습니다.`, 'success');
-    } catch (error) {
-        console.error('Error updating status:', error);
-        showMessage('상태 변경 중 오류가 발생했습니다.', 'error');
-    }
-}
-
-// 다른 멤버 상태 변경 (관리자 기능)
-async function changeMemberStatus(memberId) {
-    const member = members[memberId];
-    if (!member) return;
-    
-    const statuses = ['online', 'away', 'busy', 'offline'];
-    const currentStatus = member.status || 'offline';
-    const currentIndex = statuses.indexOf(currentStatus);
-    const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-    
-    try {
-        await update(ref(database, 'members/' + memberId), {
-            status: nextStatus,
-            lastSeen: new Date().toISOString()
-        });
-        showMessage(`${member.name}님의 상태가 ${getStatusText(nextStatus)}(으)로 변경되었습니다.`, 'success');
-    } catch (error) {
-        console.error('Error changing member status:', error);
-        showMessage('상태 변경 중 오류가 발생했습니다.', 'error');
-    }
-}
-
-// 현재 사용자 변경
-function onUserSelectChange() {
-    currentUserId = currentUserSelect.value;
-    if (currentUserId) {
-        localStorage.setItem('currentUserId', currentUserId);
-        showMessage(`현재 사용자: ${members[currentUserId].name}`, 'info');
-    } else {
-        localStorage.removeItem('currentUserId');
-    }
-    updateMemberDisplay();
+    onlineCountElement.textContent = onlineCount;
+    offlineCountElement.textContent = offlineCount;
 }
 
 // 메시지 표시
@@ -317,20 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Firebase 초기화
     await initializeFirebase();
-    
-    // 이벤트 리스너 등록
-    currentUserSelect.addEventListener('change', onUserSelectChange);
-    
-    // 자동 새로고침 (30초마다 lastSeen 업데이트)
-    setInterval(() => {
-        if (currentUserId && members[currentUserId]?.status === 'online') {
-            update(ref(database, 'members/' + currentUserId), {
-                lastSeen: new Date().toISOString()
-            });
-        }
-    }, 30000);
 });
 
 // 전역 함수로 등록
-window.setMyStatus = setMyStatus;
-window.changeMemberStatus = changeMemberStatus;
+window.toggleMemberStatus = toggleMemberStatus;

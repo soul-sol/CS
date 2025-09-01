@@ -28,62 +28,19 @@
 
         <!-- 온라인 상태 요약 -->
         <div class="online-summary">
-            <div class="summary-card">
-                <div class="summary-icon online">🟢</div>
+            <div class="summary-card online-card">
+                <div class="summary-icon">🟢</div>
                 <div class="summary-info">
                     <span class="summary-label">온라인</span>
                     <span class="summary-count" id="onlineCount">0</span>
                 </div>
             </div>
-            <div class="summary-card">
-                <div class="summary-icon away">🟡</div>
-                <div class="summary-info">
-                    <span class="summary-label">자리비움</span>
-                    <span class="summary-count" id="awayCount">0</span>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-icon busy">🔴</div>
-                <div class="summary-info">
-                    <span class="summary-label">게임중</span>
-                    <span class="summary-count" id="busyCount">0</span>
-                </div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-icon offline">⚫</div>
+            <div class="summary-card offline-card">
+                <div class="summary-icon">⚫</div>
                 <div class="summary-info">
                     <span class="summary-label">오프라인</span>
                     <span class="summary-count" id="offlineCount">0</span>
                 </div>
-            </div>
-        </div>
-
-        <!-- 빠른 상태 변경 -->
-        <div class="quick-status-section">
-            <h2>내 상태 변경</h2>
-            <div class="status-buttons">
-                <button class="status-btn status-online" onclick="setMyStatus('online')">
-                    <span class="status-icon">🟢</span>
-                    <span>온라인</span>
-                </button>
-                <button class="status-btn status-away" onclick="setMyStatus('away')">
-                    <span class="status-icon">🟡</span>
-                    <span>자리비움</span>
-                </button>
-                <button class="status-btn status-busy" onclick="setMyStatus('busy')">
-                    <span class="status-icon">🔴</span>
-                    <span>게임중</span>
-                </button>
-                <button class="status-btn status-offline" onclick="setMyStatus('offline')">
-                    <span class="status-icon">⚫</span>
-                    <span>오프라인</span>
-                </button>
-            </div>
-            <div class="current-user-info">
-                <label for="currentUserSelect">현재 사용자:</label>
-                <select id="currentUserSelect" class="user-select">
-                    <option value="">선택하세요</option>
-                </select>
             </div>
         </div>
 

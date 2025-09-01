@@ -61,11 +61,15 @@ function displayMembers() {
         tier1: [],
         tier2: [],
         tier3: [],
+        tier4: [],
         unassigned: []
     };
     
-    // 멤버를 티어별로 그룹화
+    // 온라인 멤버만 필터링하여 티어별로 그룹화
     Object.values(members).forEach(member => {
+        // 오프라인 멤버는 제외
+        if (member.status !== 'online') return;
+        
         const tier = member.tier || 'unassigned';
         if (tierGroups[tier]) {
             tierGroups[tier].push(member);
@@ -76,6 +80,7 @@ function displayMembers() {
     displayTierMembers('tier1Members', tierGroups.tier1, 'tier1');
     displayTierMembers('tier2Members', tierGroups.tier2, 'tier2');
     displayTierMembers('tier3Members', tierGroups.tier3, 'tier3');
+    displayTierMembers('tier4Members', tierGroups.tier4, 'tier4');
     displayTierMembers('unassignedMembers', tierGroups.unassigned, 'unassigned');
     
     updateSelectedCount();

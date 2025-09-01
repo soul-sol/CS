@@ -135,6 +135,10 @@
     gap: 8px;
 }
 
+.tier-blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
 /* 멤버 체크박스 리스트 */
 .member-checkbox-list {
     display: flex;
