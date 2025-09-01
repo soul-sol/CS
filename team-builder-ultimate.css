@@ -31,7 +31,7 @@
 }
 
 .member-selection h2 {
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     font-size: 1.3rem;
     color: var(--text-primary);
     text-transform: uppercase;
@@ -55,7 +55,7 @@
 }
 
 .selected-count {
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--neon-blue);
@@ -144,7 +144,7 @@
 }
 
 .member-kd {
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     font-size: 0.85rem;
     color: var(--neon-blue);
     margin-left: 10px;
@@ -180,7 +180,7 @@
 }
 
 .team-options h2 {
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     font-size: 1.3rem;
     color: var(--text-primary);
     text-transform: uppercase;
@@ -211,7 +211,7 @@
     border: 1px solid rgba(0, 212, 255, 0.3);
     border-radius: 8px;
     color: var(--text-primary);
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     font-size: 1rem;
     transition: all 0.3s ease;
 }
@@ -310,7 +310,7 @@
 }
 
 .team-results h2 {
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     font-size: 1.3rem;
     color: var(--text-primary);
     text-transform: uppercase;
@@ -370,7 +370,7 @@
 }
 
 .team-header {
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--neon-green);
@@ -452,7 +452,7 @@
 }
 
 .stat-row span:last-child {
-    font-family: 'Orbitron', monospace;
+    /* font-family는 style-ultimate.css에서 상속 */
     color: var(--neon-blue);
 }
 
