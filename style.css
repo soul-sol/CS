@@ -184,8 +184,10 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 15px;
-    margin: 20px 0;
+    margin: 60px 0 20px 0;
     padding: 0 10px;
+    position: relative;
+    clear: both;
 }
 
 /* 5컬럼 레이아웃 (4티어 + 무소속) */
