@@ -406,9 +406,10 @@ body {
 }
 
 .stats-grid-compact {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+    padding: 4px 0;
 }
 
 .stat-item-compact {
