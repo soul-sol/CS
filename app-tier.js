@@ -110,24 +110,25 @@ async function addMember() {
         
         // 멤버 데이터 생성 (ID에서 특수문자 제거)
         const safeId = player.id.replace(/[.$#\[\]\/]/g, '_');
+        // 시즌 통계 가져오기
+        let playerStats = null;
+        try {
+            playerStats = await fetchPlayerStats(player.id);
+            console.log('Player stats fetched:', playerStats);
+        } catch (statsError) {
+            console.error('Stats fetch error:', statsError);
+        }
+        
         const memberData = {
             id: safeId,
             originalId: player.id,
             name: player.attributes.name,
             shardId: player.attributes.shardId,
             tier: 'unassigned', // 기본값: 무소속
-            addedAt: new Date().toISOString()
+            addedAt: new Date().toISOString(),
+            stats: playerStats,
+            lastStatsUpdate: new Date().toISOString()
         };
-        
-        // 시즌 통계 가져오기
-        try {
-            const stats = await fetchPlayerStats(player.id);
-            console.log('Player stats fetched:', stats);
-            memberData.stats = stats;
-        } catch (statsError) {
-            console.error('Stats fetch error:', statsError);
-            memberData.stats = null;
-        }
         
         console.log('Adding member to Firebase:', memberData);
         
@@ -151,9 +152,12 @@ async function addMember() {
 // 플레이어 통계 가져오기
 async function fetchPlayerStats(playerId) {
     try {
-        // 현재 시즌 통계
+        // 현재 랭크 시즌 ID (시즌 29 - 2024)
+        const currentSeasonId = 'division.bro.official.pc-2018-29';
+        
+        // 시즌 통계 가져오기
         const seasonStatsResponse = await fetch(
-            `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
+            `${API_BASE_URL}/players/${playerId}/seasons/${currentSeasonId}`,
             {
                 headers: {
                     'Authorization': `Bearer ${API_KEY}`,
@@ -163,22 +167,52 @@ async function fetchPlayerStats(playerId) {
         );
         
         if (!seasonStatsResponse.ok) {
-            return null;
+            console.log('Season stats not available, trying lifetime stats...');
+            // 시즌 통계가 없으면 lifetime 통계 시도
+            const lifetimeResponse = await fetch(
+                `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Accept': 'application/vnd.api+json'
+                    }
+                }
+            );
+            
+            if (!lifetimeResponse.ok) {
+                return null;
+            }
+            
+            const lifetimeData = await lifetimeResponse.json();
+            const stats = lifetimeData.data.attributes.gameModeStats;
+            
+            // 스쿼드 FPP 우선, 없으면 스쿼드 TPP
+            const squadStats = stats['squad-fpp'] || stats['squad'] || {};
+            const duoStats = stats['duo-fpp'] || stats['duo'] || {};
+            const soloStats = stats['solo-fpp'] || stats['solo'] || {};
+            
+            // 가장 많이 플레이한 모드의 통계 사용
+            const mainStats = squadStats.roundsPlayed > 0 ? squadStats : 
+                             duoStats.roundsPlayed > 0 ? duoStats : 
+                             soloStats;
+            
+            return extractDetailedStats(mainStats);
         }
         
         const seasonData = await seasonStatsResponse.json();
         const stats = seasonData.data.attributes.gameModeStats;
         
-        // 주요 통계 추출
-        const soloStats = stats['solo-fpp'] || stats['solo'] || {};
-        const duoStats = stats['duo-fpp'] || stats['duo'] || {};
+        // 스쿼드 FPP 우선, 없으면 스쿼드 TPP
         const squadStats = stats['squad-fpp'] || stats['squad'] || {};
+        const duoStats = stats['duo-fpp'] || stats['duo'] || {};
+        const soloStats = stats['solo-fpp'] || stats['solo'] || {};
         
-        return {
-            solo: extractStats(soloStats),
-            duo: extractStats(duoStats),
-            squad: extractStats(squadStats)
-        };
+        // 가장 많이 플레이한 모드의 통계 사용
+        const mainStats = squadStats.roundsPlayed > 0 ? squadStats : 
+                         duoStats.roundsPlayed > 0 ? duoStats : 
+                         soloStats;
+        
+        return extractDetailedStats(mainStats);
         
     } catch (error) {
         console.error('Error fetching player stats:', error);
@@ -186,29 +220,43 @@ async function fetchPlayerStats(playerId) {
     }
 }
 
-// 통계 추출
-function extractStats(modeStats) {
+// 상세 통계 추출
+function extractDetailedStats(modeStats) {
     const rounds = modeStats.roundsPlayed || 0;
     const kills = modeStats.kills || 0;
+    const deaths = modeStats.losses || rounds; // losses가 없으면 rounds 사용
     const damage = modeStats.damageDealt || 0;
     const wins = modeStats.wins || 0;
+    const assists = modeStats.assists || 0;
+    const headshotKills = modeStats.headshotKills || 0;
     
-    // K/D 계산 - 라운드가 0이면 0, 아니면 킬/라운드
-    const kdRatio = rounds > 0 ? (kills / rounds).toFixed(2) : '0.00';
+    // 실제 K/D 계산 (죽음이 0이면 킬수 그대로, 아니면 킬/죽음)
+    const kdRatio = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
     
     // 평균 데미지 계산
     const avgDmg = rounds > 0 ? Math.round(damage / rounds) : 0;
     
+    // 헤드샷 비율
+    const headshotRate = kills > 0 ? ((headshotKills / kills) * 100).toFixed(1) : '0.0';
+    
     return {
-        wins: wins,
-        kills: kills,
-        assists: modeStats.assists || 0,
-        damageDealt: Math.round(damage),
-        roundsPlayed: rounds,
         kd: kdRatio,
         avgDamage: avgDmg,
-        winRate: rounds > 0 ? (wins / rounds * 100).toFixed(1) : '0.0'
+        wins: wins,
+        kills: kills,
+        deaths: deaths,
+        assists: assists,
+        damageDealt: Math.round(damage),
+        roundsPlayed: rounds,
+        winRate: rounds > 0 ? ((wins / rounds) * 100).toFixed(1) : '0.0',
+        headshotRate: headshotRate,
+        avgKills: rounds > 0 ? (kills / rounds).toFixed(1) : '0.0'
     };
+}
+
+// 기존 extractStats 함수도 유지 (하위 호환성)
+function extractStats(modeStats) {
+    return extractDetailedStats(modeStats);
 }
 
 // 티어별 멤버 표시 업데이트
@@ -267,15 +315,15 @@ function updateTierContent(element, memberList, tier) {
                 <button class="member-remove" onclick="removeMember('${member.id}')">×</button>
             </div>
             <div class="member-card-stats">
-                ${member.stats && member.stats.squad ? `
+                ${member.stats ? `
                     <div class="stats-grid-compact">
                         <div class="stat-item-compact">
                             <span class="stat-label">K/D</span>
-                            <span class="stat-value">${member.stats.squad.kd || '0.00'}</span>
+                            <span class="stat-value">${member.stats.kd || '0.00'}</span>
                         </div>
                         <div class="stat-item-compact">
                             <span class="stat-label">DMG</span>
-                            <span class="stat-value">${member.stats.squad.avgDamage || 0}</span>
+                            <span class="stat-value">${member.stats.avgDamage || 0}</span>
                         </div>
                     </div>
                 ` : `
@@ -392,9 +440,22 @@ async function handleDrop(e) {
 }
 
 // 멤버 상세 정보 표시
-function showMemberDetails(memberId) {
+async function showMemberDetails(memberId) {
     const member = members[memberId];
     if (!member) return;
+    
+    // 통계 업데이트 확인
+    const lastUpdate = member.lastStatsUpdate ? new Date(member.lastStatsUpdate) : null;
+    const now = new Date();
+    const hoursSinceUpdate = lastUpdate ? (now - lastUpdate) / (1000 * 60 * 60) : 999;
+    
+    // 24시간이 지났으면 통계 업데이트 제안
+    if (hoursSinceUpdate > 24) {
+        if (confirm(`${member.name}님의 통계를 업데이트하시겠습니까?\n마지막 업데이트: ${lastUpdate ? lastUpdate.toLocaleString() : '없음'}`)) {
+            await updateMemberStats(memberId);
+            return;
+        }
+    }
     
     const modal = document.getElementById('memberModal');
     const modalContent = document.getElementById('modalMemberInfo');
@@ -403,11 +464,19 @@ function showMemberDetails(memberId) {
         <h2>${member.name}</h2>
         <div class="member-detail-stats">
             ${member.stats ? `
-                <h3>Solo 통계</h3>
+                <h3>시즌 통계</h3>
                 <div class="stats-grid">
                     <div class="stat-item">
+                        <span class="label">K/D:</span>
+                        <span class="value">${member.stats.kd}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">평균 데미지:</span>
+                        <span class="value">${member.stats.avgDamage}</span>
+                    </div>
+                    <div class="stat-item">
                         <span class="label">승리:</span>
-                        <span class="value">${member.stats.solo.wins}</span>
+                        <span class="value">${member.stats.wins}</span>
                     </div>
                     <div class="stat-item">
                         <span class="label">K/D:</span>
@@ -531,6 +600,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // 전역 함수로 등록
+// 멤버 통계 업데이트
+async function updateMemberStats(memberId) {
+    const member = members[memberId];
+    if (!member) return;
+    
+    showLoading();
+    try {
+        // 원본 ID로 통계 가져오기
+        const playerId = member.originalId || memberId;
+        const stats = await fetchPlayerStats(playerId);
+        
+        if (stats) {
+            // Firebase 업데이트
+            await update(ref(database, `members/${memberId}`), {
+                stats: stats,
+                lastStatsUpdate: new Date().toISOString()
+            });
+            
+            showSuccess(`${member.name}님의 통계가 업데이트되었습니다!`);
+            
+            // 모달 다시 표시
+            setTimeout(() => showMemberDetails(memberId), 1000);
+        } else {
+            showError('통계를 가져올 수 없습니다.');
+        }
+    } catch (error) {
+        console.error('Error updating stats:', error);
+        showError('통계 업데이트 중 오류가 발생했습니다.');
+    } finally {
+        hideLoading();
+    }
+}
+
 window.showMemberDetails = showMemberDetails;
+window.updateMemberStats = updateMemberStats;
 window.removeMember = removeMember;
 window.closeMemberModal = closeMemberModal;
