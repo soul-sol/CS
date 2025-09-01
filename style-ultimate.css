@@ -169,10 +169,10 @@ body::after {
 /* Page Title - Cyberpunk Style */
 .page-title {
     font-family: 'Orbitron', monospace;
-    font-size: 2.2rem;
+    font-size: 1.6rem;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue), var(--neon-pink));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -231,7 +231,7 @@ body::after {
 
 .stat-value {
     font-family: 'Orbitron', monospace;
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 700;
     background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
     -webkit-background-clip: text;
@@ -437,14 +437,14 @@ body::after {
 
 /* Tier Headers */
 .tier-header {
-    padding: 20px;
+    padding: 15px;
     color: white;
     font-family: 'Orbitron', monospace;
     font-weight: 700;
     text-align: center;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    font-size: 1rem;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
     position: relative;
     overflow: hidden;
 }
@@ -494,9 +494,9 @@ body::after {
 /* Member Cards - Cyberpunk Style */
 .member-card {
     background: linear-gradient(135deg, rgba(30, 35, 50, 0.9), rgba(40, 45, 60, 0.9));
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 10px;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
     cursor: move;
     transition: all 0.3s ease;
     position: relative;
@@ -567,10 +567,10 @@ body::after {
 .member-name {
     font-family: 'Exo 2', sans-serif;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: var(--text-primary);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .member-remove {
@@ -631,7 +631,7 @@ body::after {
 
 .stat-item-compact .stat-value {
     font-family: 'Orbitron', monospace;
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: var(--neon-blue);
 }
