@@ -152,9 +152,8 @@ async function addMember() {
 // 플레이어 통계 가져오기
 async function fetchPlayerStats(playerId) {
     try {
-        // 현재 랭크 시즌 ID (시즌 30 - 2024년 11월)
-        // 카카오 서버용 시즌 ID
-        const currentSeasonId = 'division.bro.official.pc-2018-30';
+        // 현재 랭크 시즌 ID (시즌 29 - 2024)
+        const currentSeasonId = 'division.bro.official.pc-2018-29';
         
         // 경쟁전(Ranked) 통계 먼저 시도
         const rankedStatsResponse = await fetch(
@@ -168,25 +167,22 @@ async function fetchPlayerStats(playerId) {
         );
         
         if (rankedStatsResponse.ok) {
-            // 경쟁전 통계 사용
             const rankedData = await rankedStatsResponse.json();
-            const stats = rankedData.data.attributes.rankedGameModeStats;
+            console.log('Ranked stats found:', rankedData);
             
-            // 스쿼드 우선, 없으면 듀오, 솔로 순
-            const squadStats = stats['squad-fpp'] || stats['squad'] || {};
-            const duoStats = stats['duo-fpp'] || stats['duo'] || {};
-            const soloStats = stats['solo-fpp'] || stats['solo'] || {};
-            
-            const mainStats = squadStats.roundsPlayed > 0 ? squadStats : 
-                             duoStats.roundsPlayed > 0 ? duoStats : 
-                             soloStats;
-            
-            console.log('Using ranked stats');
-            return extractDetailedStats(mainStats);
+            if (rankedData.data && rankedData.data.attributes && rankedData.data.attributes.rankedGameModeStats) {
+                const rankedStats = rankedData.data.attributes.rankedGameModeStats;
+                
+                // 스쿼드 랭크 우선, 없으면 다른 모드
+                const squadRanked = rankedStats['squad-fpp'] || rankedStats['squad'] || {};
+                
+                if (squadRanked.roundsPlayed > 0) {
+                    return extractDetailedStats(squadRanked, true); // true = ranked mode
+                }
+            }
         }
         
-        // 경쟁전 통계가 없으면 일반 시즌 통계 시도
-        console.log('Ranked stats not available, trying regular season stats...');
+        // 랭크 통계가 없으면 일반 시즌 통계 가져오기
         const seasonStatsResponse = await fetch(
             `${API_BASE_URL}/players/${playerId}/seasons/${currentSeasonId}`,
             {
@@ -199,7 +195,7 @@ async function fetchPlayerStats(playerId) {
         
         if (!seasonStatsResponse.ok) {
             console.log('Season stats not available, trying lifetime stats...');
-            // 일반 시즌 통계도 없으면 lifetime 통계 시도
+            // 시즌 통계가 없으면 lifetime 통계 시도
             const lifetimeResponse = await fetch(
                 `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
                 {
@@ -252,23 +248,36 @@ async function fetchPlayerStats(playerId) {
 }
 
 // 상세 통계 추출
-function extractDetailedStats(modeStats) {
+function extractDetailedStats(modeStats, isRanked = false) {
     const rounds = modeStats.roundsPlayed || 0;
     const kills = modeStats.kills || 0;
-    const deaths = modeStats.losses || rounds; // losses가 없으면 rounds 사용
+    const deaths = modeStats.deaths || modeStats.losses || rounds; // deaths 우선, 없으면 losses, 그것도 없으면 rounds
     const damage = modeStats.damageDealt || 0;
     const wins = modeStats.wins || 0;
     const assists = modeStats.assists || 0;
     const headshotKills = modeStats.headshotKills || 0;
     
-    // 실제 K/D 계산 (죽음이 0이면 킬수 그대로, 아니면 킬/죽음)
-    const kdRatio = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
+    // 랭크 모드에서는 KDA 계산 (킬+어시스트/죽음)
+    let kdRatio;
+    if (isRanked && modeStats.kda !== undefined) {
+        kdRatio = modeStats.kda.toFixed(2);
+    } else {
+        // 일반 K/D 계산
+        kdRatio = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
+    }
     
     // 평균 데미지 계산
     const avgDmg = rounds > 0 ? Math.round(damage / rounds) : 0;
     
     // 헤드샷 비율
     const headshotRate = kills > 0 ? ((headshotKills / kills) * 100).toFixed(1) : '0.0';
+    
+    // 랭크 정보 추가
+    const rankInfo = isRanked ? {
+        currentTier: modeStats.currentTier || {},
+        currentRankPoint: modeStats.currentRankPoint || 0,
+        bestTier: modeStats.bestTier || {}
+    } : null;
     
     return {
         kd: kdRatio,
@@ -281,7 +290,9 @@ function extractDetailedStats(modeStats) {
         roundsPlayed: rounds,
         winRate: rounds > 0 ? ((wins / rounds) * 100).toFixed(1) : '0.0',
         headshotRate: headshotRate,
-        avgKills: rounds > 0 ? (kills / rounds).toFixed(1) : '0.0'
+        avgKills: rounds > 0 ? (kills / rounds).toFixed(1) : '0.0',
+        isRanked: isRanked,
+        rankInfo: rankInfo
     };
 }
 
@@ -349,7 +360,7 @@ function updateTierContent(element, memberList, tier) {
                 ${member.stats ? `
                     <div class="stats-grid-compact">
                         <div class="stat-item-compact">
-                            <span class="stat-label">K/D</span>
+                            <span class="stat-label">${member.stats.isRanked ? '🏆 K/D' : 'K/D'}</span>
                             <span class="stat-value">${member.stats.kd || '0.00'}</span>
                         </div>
                         <div class="stat-item-compact">
