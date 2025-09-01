@@ -65,10 +65,21 @@ function displayMembers() {
         unassigned: []
     };
     
+    // 디버깅: 전체 멤버 수와 상태 확인
+    console.log('Total members:', Object.keys(members).length);
+    console.log('Members status:', Object.values(members).map(m => ({
+        name: m.name,
+        status: m.status,
+        tier: m.tier
+    })));
+    
     // 온라인 멤버만 필터링하여 티어별로 그룹화
     Object.values(members).forEach(member => {
         // 오프라인 멤버는 제외
-        if (member.status !== 'online') return;
+        if (member.status !== 'online') {
+            console.log(`Filtered out offline member: ${member.name}, status: ${member.status}`);
+            return;
+        }
         
         const tier = member.tier || 'unassigned';
         if (tierGroups[tier]) {
@@ -97,7 +108,8 @@ function displayTierMembers(elementId, memberList, tier) {
     
     container.innerHTML = memberList.map(member => {
         const isChecked = selectedMembers.has(member.id);
-        const kdRatio = member.stats ? member.stats.squad.kd : '0.00';
+        // stats 구조 수정: stats.kd로 직접 접근
+        const kdRatio = member.stats ? (member.stats.kd || member.stats.squad?.kd || '0.00') : '0.00';
         
         return `
             <label class="member-checkbox">
@@ -293,7 +305,7 @@ function displayTeams(teams) {
 // 팀 평균 K/D 계산
 function calculateTeamKD(team) {
     const totalKD = team.reduce((sum, member) => {
-        const kd = member.stats ? parseFloat(member.stats.squad.kd) : 0;
+        const kd = member.stats ? parseFloat(member.stats.kd || member.stats.squad?.kd || 0) : 0;
         return sum + kd;
     }, 0);
     
