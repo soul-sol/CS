@@ -40,11 +40,13 @@ const totalMembersElement = document.getElementById('totalMembers');
 const tier1Element = document.getElementById('tier1');
 const tier2Element = document.getElementById('tier2');
 const tier3Element = document.getElementById('tier3');
+const tier4Element = document.getElementById('tier4');
 const unassignedElement = document.getElementById('unassigned');
 
 const tier1CountElement = document.getElementById('tier1Count');
 const tier2CountElement = document.getElementById('tier2Count');
 const tier3CountElement = document.getElementById('tier3Count');
+const tier4CountElement = document.getElementById('tier4Count');
 const unassignedCountElement = document.getElementById('unassignedCount');
 
 // 멤버 데이터
@@ -188,8 +190,13 @@ function extractStats(modeStats) {
     return {
         wins: modeStats.wins || 0,
         kills: modeStats.kills || 0,
+        assists: modeStats.assists || 0,
+        damageDealt: Math.round(modeStats.damageDealt || 0),
+        roundsPlayed: modeStats.roundsPlayed || 0,
         kd: modeStats.roundsPlayed > 0 ? 
             ((modeStats.kills || 0) / modeStats.roundsPlayed).toFixed(2) : '0.00',
+        avgDamage: modeStats.roundsPlayed > 0 ?
+            Math.round((modeStats.damageDealt || 0) / modeStats.roundsPlayed) : 0,
         winRate: modeStats.roundsPlayed > 0 ? 
             ((modeStats.wins || 0) / modeStats.roundsPlayed * 100).toFixed(1) : '0.0'
     };
@@ -201,6 +208,7 @@ function updateTierDisplay() {
         tier1: [],
         tier2: [],
         tier3: [],
+        tier4: [],
         unassigned: []
     };
     
@@ -216,12 +224,14 @@ function updateTierDisplay() {
     updateTierContent(tier1Element, tierGroups.tier1, 'tier1');
     updateTierContent(tier2Element, tierGroups.tier2, 'tier2');
     updateTierContent(tier3Element, tierGroups.tier3, 'tier3');
+    updateTierContent(tier4Element, tierGroups.tier4, 'tier4');
     updateTierContent(unassignedElement, tierGroups.unassigned, 'unassigned');
     
     // 카운트 업데이트
     tier1CountElement.textContent = tierGroups.tier1.length;
     tier2CountElement.textContent = tierGroups.tier2.length;
     tier3CountElement.textContent = tierGroups.tier3.length;
+    tier4CountElement.textContent = tierGroups.tier4.length;
     unassignedCountElement.textContent = tierGroups.unassigned.length;
     
     // 총 멤버 수 업데이트
@@ -249,17 +259,27 @@ function updateTierContent(element, memberList, tier) {
             </div>
             <div class="member-card-stats">
                 ${member.stats ? `
-                    <div class="stat-row">
-                        <span class="stat-label">K/D:</span>
-                        <span class="stat-value">${member.stats.squad.kd}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">승률:</span>
-                        <span class="stat-value">${member.stats.squad.winRate}%</span>
+                    <div class="stats-grid-compact">
+                        <div class="stat-item-compact">
+                            <span class="stat-label">K/D</span>
+                            <span class="stat-value">${member.stats.squad.kd}</span>
+                        </div>
+                        <div class="stat-item-compact">
+                            <span class="stat-label">DMG</span>
+                            <span class="stat-value">${member.stats.squad.avgDamage}</span>
+                        </div>
+                        <div class="stat-item-compact">
+                            <span class="stat-label">승률</span>
+                            <span class="stat-value">${member.stats.squad.winRate}%</span>
+                        </div>
+                        <div class="stat-item-compact">
+                            <span class="stat-label">게임</span>
+                            <span class="stat-value">${member.stats.squad.roundsPlayed}</span>
+                        </div>
                     </div>
                 ` : '<p class="no-stats">통계 없음</p>'}
             </div>
-            <button class="member-details-btn" onclick="showMemberDetails('${member.id}')">상세보기</button>
+            <button class="member-details-btn" onclick="showMemberDetails('${member.id}')">상세</button>
         </div>
     `).join('');
     

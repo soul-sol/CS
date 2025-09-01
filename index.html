@@ -28,6 +28,11 @@
                     <span class="stat-value">17</span>
                 </div>
             </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link active">티어 관리</a>
+                <a href="members.html" class="nav-link">멤버 상태</a>
+                <a href="team-builder.html" class="nav-link">팀 빌더</a>
+            </nav>
         </header>
 
         <!-- 멤버 추가 섹션 -->
@@ -49,8 +54,8 @@
             </div>
         </div>
 
-        <!-- 티어 컨테이너 -->
-        <div class="tiers-container">
+        <!-- 티어 컨테이너 (5개 컬럼으로 변경) -->
+        <div class="tiers-container tiers-5col">
             <!-- 1티어 -->
             <div class="tier-column" data-tier="tier1">
                 <div class="tier-header tier-gold">
@@ -93,6 +98,22 @@
                     <span class="tier-count" id="tier3Count">0</span>
                 </div>
                 <div class="tier-content" id="tier3">
+                    <div class="tier-drop-zone">
+                        <p class="drop-hint">멤버를 여기로 드래그하세요</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4티어 -->
+            <div class="tier-column" data-tier="tier4">
+                <div class="tier-header tier-blue">
+                    <h2 class="tier-title">
+                        <span class="tier-icon">⚔️</span>
+                        4티어 - Rookie
+                    </h2>
+                    <span class="tier-count" id="tier4Count">0</span>
+                </div>
+                <div class="tier-content" id="tier4">
                     <div class="tier-drop-zone">
                         <p class="drop-hint">멤버를 여기로 드래그하세요</p>
                     </div>

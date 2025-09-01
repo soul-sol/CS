@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CountShot Clan - Members</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="members.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 헤더 -->
+        <header class="main-header">
+            <div class="header-gif">
+                <img src="GIF.gif" alt="CountShot" class="header-logo-gif">
+            </div>
+            <div class="header-text">
+                <h1 class="page-title">CountShot Members</h1>
+                <p class="subtitle">멤버 온라인 상태 관리</p>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">티어 관리</a>
+                <a href="members.html" class="nav-link active">멤버 상태</a>
+                <a href="team-builder.html" class="nav-link">팀 빌더</a>
+            </nav>
+        </header>
+
+        <!-- 온라인 상태 요약 -->
+        <div class="online-summary">
+            <div class="summary-card">
+                <div class="summary-icon online">🟢</div>
+                <div class="summary-info">
+                    <span class="summary-label">온라인</span>
+                    <span class="summary-count" id="onlineCount">0</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon away">🟡</div>
+                <div class="summary-info">
+                    <span class="summary-label">자리비움</span>
+                    <span class="summary-count" id="awayCount">0</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon busy">🔴</div>
+                <div class="summary-info">
+                    <span class="summary-label">게임중</span>
+                    <span class="summary-count" id="busyCount">0</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-icon offline">⚫</div>
+                <div class="summary-info">
+                    <span class="summary-label">오프라인</span>
+                    <span class="summary-count" id="offlineCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 빠른 상태 변경 -->
+        <div class="quick-status-section">
+            <h2>내 상태 변경</h2>
+            <div class="status-buttons">
+                <button class="status-btn status-online" onclick="setMyStatus('online')">
+                    <span class="status-icon">🟢</span>
+                    <span>온라인</span>
+                </button>
+                <button class="status-btn status-away" onclick="setMyStatus('away')">
+                    <span class="status-icon">🟡</span>
+                    <span>자리비움</span>
+                </button>
+                <button class="status-btn status-busy" onclick="setMyStatus('busy')">
+                    <span class="status-icon">🔴</span>
+                    <span>게임중</span>
+                </button>
+                <button class="status-btn status-offline" onclick="setMyStatus('offline')">
+                    <span class="status-icon">⚫</span>
+                    <span>오프라인</span>
+                </button>
+            </div>
+            <div class="current-user-info">
+                <label for="currentUserSelect">현재 사용자:</label>
+                <select id="currentUserSelect" class="user-select">
+                    <option value="">선택하세요</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 멤버 목록 -->
+        <div class="members-grid">
+            <!-- 1티어 섹션 -->
+            <div class="tier-section">
+                <h2 class="tier-header tier-gold">
+                    <span class="tier-icon">👑</span>
+                    1티어 - Elite
+                </h2>
+                <div class="members-list" id="tier1Members">
+                    <!-- 1티어 멤버들이 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <!-- 2티어 섹션 -->
+            <div class="tier-section">
+                <h2 class="tier-header tier-red">
+                    <span class="tier-icon">🔥</span>
+                    2티어 - Pro
+                </h2>
+                <div class="members-list" id="tier2Members">
+                    <!-- 2티어 멤버들이 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <!-- 3티어 섹션 -->
+            <div class="tier-section">
+                <h2 class="tier-header tier-green">
+                    <span class="tier-icon">🌟</span>
+                    3티어 - Regular
+                </h2>
+                <div class="members-list" id="tier3Members">
+                    <!-- 3티어 멤버들이 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <!-- 4티어 섹션 -->
+            <div class="tier-section">
+                <h2 class="tier-header tier-blue">
+                    <span class="tier-icon">⚔️</span>
+                    4티어 - Rookie
+                </h2>
+                <div class="members-list" id="tier4Members">
+                    <!-- 4티어 멤버들이 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <!-- 무소속 섹션 -->
+            <div class="tier-section">
+                <h2 class="tier-header tier-gray">
+                    <span class="tier-icon">📋</span>
+                    무소속
+                </h2>
+                <div class="members-list" id="unassignedMembers">
+                    <!-- 무소속 멤버들이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 메시지 -->
+        <div id="message" class="message hidden"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWEWmussrZcqv4LgCvjUdcuzRcaUST3Ls",
+            authDomain: "cs-homepage-5c3c2.firebaseapp.com",
+            databaseURL: "https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cs-homepage-5c3c2",
+            storageBucket: "cs-homepage-5c3c2.firebasestorage.app",
+            messagingSenderId: "117726976721",
+            appId: "1:117726976721:web:f9dd3297e82113414183f0",
+            measurementId: "G-9XZ9SJ3D78"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Firebase를 전역으로 사용 가능하게 설정
+        window.firebaseDB = {
+            database: database,
+            ref: ref,
+            set: set,
+            onValue: onValue,
+            update: update
+        };
+    </script>
+    <script src="members.js"></script>
+</body>
+</html>
