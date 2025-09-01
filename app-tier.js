@@ -113,10 +113,12 @@ async function addMember() {
         // 시즌 통계 가져오기
         let playerStats = null;
         try {
+            console.log('Fetching stats for player ID:', player.id);
             playerStats = await fetchPlayerStats(player.id);
-            console.log('Player stats fetched:', playerStats);
+            console.log('Player stats fetched successfully:', playerStats);
         } catch (statsError) {
             console.error('Stats fetch error:', statsError);
+            playerStats = null;
         }
         
         const memberData = {
@@ -168,18 +170,24 @@ async function fetchPlayerStats(playerId) {
         
         if (rankedStatsResponse.ok) {
             const rankedData = await rankedStatsResponse.json();
-            console.log('Ranked stats found:', rankedData);
+            console.log('Ranked stats response:', rankedData);
             
             if (rankedData.data && rankedData.data.attributes && rankedData.data.attributes.rankedGameModeStats) {
                 const rankedStats = rankedData.data.attributes.rankedGameModeStats;
+                console.log('Ranked game mode stats:', rankedStats);
                 
                 // 스쿼드 랭크 우선, 없으면 다른 모드
                 const squadRanked = rankedStats['squad-fpp'] || rankedStats['squad'] || {};
+                console.log('Squad ranked stats:', squadRanked);
                 
                 if (squadRanked.roundsPlayed > 0) {
-                    return extractDetailedStats(squadRanked, true); // true = ranked mode
+                    const stats = extractDetailedStats(squadRanked, true);
+                    console.log('Extracted ranked stats:', stats);
+                    return stats;
                 }
             }
+        } else {
+            console.log('Ranked stats not available, status:', rankedStatsResponse.status);
         }
         
         // 랭크 통계가 없으면 일반 시즌 통계 가져오기
@@ -227,7 +235,9 @@ async function fetchPlayerStats(playerId) {
         }
         
         const seasonData = await seasonStatsResponse.json();
+        console.log('Season stats response:', seasonData);
         const stats = seasonData.data.attributes.gameModeStats;
+        console.log('Game mode stats:', stats);
         
         // 스쿼드 FPP 우선, 없으면 스쿼드 TPP
         const squadStats = stats['squad-fpp'] || stats['squad'] || {};
@@ -239,7 +249,10 @@ async function fetchPlayerStats(playerId) {
                          duoStats.roundsPlayed > 0 ? duoStats : 
                          soloStats;
         
-        return extractDetailedStats(mainStats);
+        console.log('Selected main stats:', mainStats);
+        const extractedStats = extractDetailedStats(mainStats);
+        console.log('Extracted season stats:', extractedStats);
+        return extractedStats;
         
     } catch (error) {
         console.error('Error fetching player stats:', error);
