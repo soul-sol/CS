@@ -49,61 +49,47 @@ async function initializeFirebase() {
 
 // 멤버 표시 업데이트
 function updateMemberDisplay() {
-    const tierGroups = {
-        tier1: [],
-        tier2: [],
-        tier3: [],
-        tier4: [],
-        unassigned: []
-    };
-    
-    // 멤버를 티어별로 그룹화
-    Object.values(members).forEach(member => {
-        const tier = member.tier || 'unassigned';
-        if (tierGroups[tier]) {
-            tierGroups[tier].push(member);
-        }
-    });
-    
-    // 각 티어별로 멤버 표시
-    displayTierMembers('tier1Members', tierGroups.tier1);
-    displayTierMembers('tier2Members', tierGroups.tier2);
-    displayTierMembers('tier3Members', tierGroups.tier3);
-    displayTierMembers('tier4Members', tierGroups.tier4);
-    displayTierMembers('unassignedMembers', tierGroups.unassigned);
-}
-
-// 티어별 멤버 표시
-function displayTierMembers(elementId, memberList) {
-    const container = document.getElementById(elementId);
+    const container = document.getElementById('allMembers');
+    const memberList = Object.values(members);
     
     if (memberList.length === 0) {
         container.innerHTML = '<p class="no-members">멤버가 없습니다</p>';
         return;
     }
     
-    // 온라인 멤버를 먼저 정렬
+    // 온라인 멤버를 먼저, 그 다음 이름순으로 정렬
     memberList.sort((a, b) => {
         const aOnline = a.status === 'online' ? 0 : 1;
         const bOnline = b.status === 'online' ? 0 : 1;
-        return aOnline - bOnline;
+        if (aOnline !== bOnline) return aOnline - bOnline;
+        return a.name.localeCompare(b.name);
     });
     
     container.innerHTML = memberList.map(member => {
         const isOnline = member.status === 'online';
         const statusIcon = isOnline ? '🟢' : '⚫';
         const statusClass = isOnline ? 'member-online' : 'member-offline';
+        const tierBadge = getTierBadge(member.tier);
         
         return `
             <div class="member-simple-card ${statusClass}" onclick="toggleMemberStatus('${member.id}')">
                 <span class="status-dot">${statusIcon}</span>
                 <span class="member-name">${member.name}</span>
-                ${member.stats ? `
-                    <span class="member-kd">K/D: ${member.stats.squad.kd}</span>
-                ` : ''}
+                <span class="tier-badge">${tierBadge}</span>
             </div>
         `;
     }).join('');
+}
+
+// 티어 배지 가져오기
+function getTierBadge(tier) {
+    switch(tier) {
+        case 'tier1': return '👑';
+        case 'tier2': return '🔥';
+        case 'tier3': return '🌟';
+        case 'tier4': return '⚔️';
+        default: return '';
+    }
 }
 
 // 멤버 상태 토글

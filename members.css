@@ -55,35 +55,28 @@
     color: #333;
 }
 
-/* 멤버 그리드 */
-.members-grid {
-    display: grid;
-    gap: 30px;
-    margin-top: 40px;
-}
-
-.tier-section {
+/* 멤버 컨테이너 */
+.members-container {
+    max-width: 1200px;
+    margin: 40px auto;
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-.tier-header {
-    padding: 15px 20px;
-    color: white;
-    font-size: 1.2rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.members-title {
+    font-size: 1.8rem;
+    color: #333;
+    margin: 0 0 25px 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 .members-list {
-    padding: 20px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
 }
 
 /* 간소화된 멤버 카드 */
@@ -125,9 +118,9 @@
     flex: 1;
 }
 
-.member-kd {
-    font-size: 0.85rem;
-    color: #666;
+.tier-badge {
+    font-size: 1.1rem;
+    margin-left: auto;
 }
 
 .no-members {
