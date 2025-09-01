@@ -8,122 +8,139 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <!-- 왼쪽 사이드바 - 클랜원 리스트 -->
-        <aside class="sidebar">
-            <div class="clan-header">
-                <h2 class="clan-title">
-                    <span class="clan-tag">[CS]</span>
-                    CountShot
-                </h2>
-                <div class="clan-stats">
-                    <div class="stat">
-                        <span class="stat-label">레벨</span>
-                        <span class="stat-value" id="clanLevel">17</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">멤버</span>
-                        <span class="stat-value" id="memberCount">0</span>
-                    </div>
+    <div class="app-container">
+        <!-- 헤더 -->
+        <header class="main-header">
+            <div class="header-gif">
+                <img src="GIF.gif" alt="CountShot" class="header-logo-gif">
+            </div>
+            <div class="header-text">
+                <h1 class="page-title">CountShot Clan</h1>
+                <p class="subtitle">PUBG Kakao Server | Elite Squad</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-label">총 멤버</span>
+                    <span class="stat-value" id="totalMembers">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">클랜 레벨</span>
+                    <span class="stat-value">17</span>
                 </div>
             </div>
+        </header>
 
-            <div class="member-add-section">
+        <!-- 멤버 추가 섹션 -->
+        <div class="member-add-section">
+            <div class="add-member-container">
                 <input 
                     type="text" 
                     id="playerSearchInput" 
-                    placeholder="플레이어명 입력" 
+                    placeholder="플레이어명을 입력하세요" 
                     class="player-search-input"
                 >
                 <button id="addMemberBtn" class="add-member-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    추가
+                    멤버 추가
                 </button>
             </div>
+        </div>
 
-            <div class="member-list" id="memberList">
-                <div class="member-list-header">
-                    <h3>클랜 멤버</h3>
-                    <button id="clearAllBtn" class="clear-btn">전체 삭제</button>
+        <!-- 티어 컨테이너 -->
+        <div class="tiers-container">
+            <!-- 1티어 -->
+            <div class="tier-column" data-tier="tier1">
+                <div class="tier-header tier-gold">
+                    <h2 class="tier-title">
+                        <span class="tier-icon">👑</span>
+                        1티어 - Elite
+                    </h2>
+                    <span class="tier-count" id="tier1Count">0</span>
                 </div>
-                <div id="memberListContent" class="member-list-content">
-                    <!-- 멤버 리스트가 여기에 추가됩니다 -->
-                </div>
-            </div>
-        </aside>
-
-        <!-- 메인 콘텐츠 영역 -->
-        <main class="main-content">
-            <header class="main-header">
-                <div class="header-gif">
-                    <img src="GIF.gif" alt="CountShot" class="header-logo-gif">
-                </div>
-                <div class="header-text">
-                    <h1 class="page-title">CountShot Clan</h1>
-                    <p class="subtitle">PUBG Kakao Server | Elite Squad</p>
-                </div>
-            </header>
-
-            <!-- 선택된 멤버 상세 정보 -->
-            <div id="selectedMemberInfo" class="selected-member-info hidden">
-                <h2 id="selectedMemberName" class="selected-member-name"></h2>
-                <div id="selectedMemberStats" class="member-stats-grid">
-                    <!-- 선택된 멤버의 상세 통계가 여기에 표시됩니다 -->
-                </div>
-                <div id="recentMatches" class="recent-matches">
-                    <h3>최근 매치</h3>
-                    <div id="matchList" class="match-list">
-                        <!-- 최근 매치 목록이 여기에 표시됩니다 -->
+                <div class="tier-content" id="tier1">
+                    <div class="tier-drop-zone">
+                        <p class="drop-hint">멤버를 여기로 드래그하세요</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 초기 화면 (멤버 선택 전) -->
-            <div id="welcomeScreen" class="welcome-screen">
-                <div class="welcome-content">
-                    <div class="welcome-icon">🏆</div>
-                    <h2>Welcome to CountShot</h2>
-                    <p>카카오 서버 최강 클랜에 오신 것을 환영합니다!</p>
-                    <div class="instructions">
-                        <h3>사용 방법:</h3>
-                        <ol>
-                            <li>왼쪽 상단에서 플레이어명을 입력하고 추가 버튼을 클릭</li>
-                            <li>추가된 멤버를 클릭하여 상세 정보 확인</li>
-                            <li>실시간 PUBG API 데이터 조회</li>
-                        </ol>
-                    </div>
-                    <div class="clan-info-card">
-                        <h3>클랜 정보</h3>
-                        <ul>
-                            <li>클랜명: CountShot</li>
-                            <li>클랜 태그: [CS]</li>
-                            <li>서버: Kakao</li>
-                            <li>클랜 레벨: 17</li>
-                            <li>공식 멤버: 48명</li>
-                        </ul>
+            <!-- 2티어 -->
+            <div class="tier-column" data-tier="tier2">
+                <div class="tier-header tier-red">
+                    <h2 class="tier-title">
+                        <span class="tier-icon">🔥</span>
+                        2티어 - Pro
+                    </h2>
+                    <span class="tier-count" id="tier2Count">0</span>
+                </div>
+                <div class="tier-content" id="tier2">
+                    <div class="tier-drop-zone">
+                        <p class="drop-hint">멤버를 여기로 드래그하세요</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 로딩 인디케이터 -->
-            <div id="loadingIndicator" class="loading hidden">
-                <div class="spinner"></div>
-                <p>데이터를 불러오는 중...</p>
+            <!-- 3티어 -->
+            <div class="tier-column" data-tier="tier3">
+                <div class="tier-header tier-green">
+                    <h2 class="tier-title">
+                        <span class="tier-icon">🌟</span>
+                        3티어 - Regular
+                    </h2>
+                    <span class="tier-count" id="tier3Count">0</span>
+                </div>
+                <div class="tier-content" id="tier3">
+                    <div class="tier-drop-zone">
+                        <p class="drop-hint">멤버를 여기로 드래그하세요</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- 에러 메시지 -->
-            <div id="errorMessage" class="error-message hidden"></div>
-        </main>
+            <!-- 무소속 -->
+            <div class="tier-column" data-tier="unassigned">
+                <div class="tier-header tier-gray">
+                    <h2 class="tier-title">
+                        <span class="tier-icon">📋</span>
+                        무소속
+                    </h2>
+                    <span class="tier-count" id="unassignedCount">0</span>
+                </div>
+                <div class="tier-content" id="unassigned">
+                    <div class="tier-drop-zone">
+                        <p class="drop-hint">새 멤버가 여기에 추가됩니다</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 멤버 상세 정보 모달 -->
+        <div id="memberModal" class="modal hidden">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeMemberModal()">×</button>
+                <div id="modalMemberInfo">
+                    <!-- 멤버 상세 정보가 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 로딩 인디케이터 -->
+        <div id="loadingIndicator" class="loading hidden">
+            <div class="spinner"></div>
+            <p>데이터를 불러오는 중...</p>
+        </div>
+
+        <!-- 에러 메시지 -->
+        <div id="errorMessage" class="error-message hidden"></div>
     </div>
 
     <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -147,9 +164,10 @@
             ref: ref,
             set: set,
             onValue: onValue,
-            remove: remove
+            remove: remove,
+            update: update
         };
     </script>
-    <script src="app-firebase.js"></script>
+    <script src="app-tier.js"></script>
 </body>
 </html>
