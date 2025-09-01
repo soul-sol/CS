@@ -98,16 +98,19 @@ async function addMember() {
         
         const player = searchData.data[0];
         
-        // 이미 추가된 멤버인지 확인
-        if (members[player.id]) {
+        // 이미 추가된 멤버인지 확인 (safe ID로 체크)
+        const checkId = player.id.replace(/[.$#\[\]\/]/g, '_');
+        if (members[checkId]) {
             showError('이미 추가된 멤버입니다.');
             hideLoading();
             return;
         }
         
-        // 멤버 데이터 생성
+        // 멤버 데이터 생성 (ID에서 특수문자 제거)
+        const safeId = player.id.replace(/[.$#\[\]\/]/g, '_');
         const memberData = {
-            id: player.id,
+            id: safeId,
+            originalId: player.id,
             name: player.attributes.name,
             shardId: player.attributes.shardId,
             tier: 'unassigned', // 기본값: 무소속
@@ -126,7 +129,7 @@ async function addMember() {
         console.log('Adding member to Firebase:', memberData);
         
         // Firebase에 저장
-        await set(ref(database, 'members/' + player.id), memberData);
+        await set(ref(database, 'members/' + safeId), memberData);
         console.log('Member added successfully');
         
         // 입력창 초기화
