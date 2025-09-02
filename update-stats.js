@@ -48,14 +48,45 @@ function extractStats(modeStats) {
     };
 }
 
+// 현재 시즌 ID 가져오기
+async function getCurrentSeasonId() {
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/seasons`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Accept': 'application/vnd.api+json'
+                }
+            }
+        );
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        const currentSeason = data.data.find(s => s.attributes.isCurrentSeason);
+        return currentSeason ? currentSeason.id : null;
+    } catch (error) {
+        console.error('시즌 정보 가져오기 실패:', error.message);
+        return null;
+    }
+}
+
 // 플레이어 통계 가져오기
 async function fetchPlayerStats(playerId, playerName) {
     try {
         console.log(`  📊 ${playerName}의 통계 가져오는 중...`);
         
-        // lifetime 통계 가져오기
+        // 현재 시즌 ID 가져오기
+        const seasonId = await getCurrentSeasonId();
+        if (!seasonId) {
+            console.log(`  ⚠️  현재 시즌 정보를 가져올 수 없습니다`);
+            return null;
+        }
+        
+        // 현재 시즌 통계 가져오기
         const response = await fetch(
-            `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
+            `${API_BASE_URL}/players/${playerId}/seasons/${seasonId}`,
             {
                 headers: {
                     'Authorization': `Bearer ${API_KEY}`,
@@ -72,10 +103,10 @@ async function fetchPlayerStats(playerId, playerName) {
         const data = await response.json();
         const stats = data.data.attributes.gameModeStats;
         
-        // 주요 모드별 통계 추출
-        const soloStats = stats['solo-fpp'] || stats['solo'] || {};
-        const duoStats = stats['duo-fpp'] || stats['duo'] || {};
-        const squadStats = stats['squad-fpp'] || stats['squad'] || {};
+        // 주요 모드별 통계 추출 (카카오 서버는 주로 TPP)
+        const soloStats = stats['solo'] || stats['solo-fpp'] || {};
+        const duoStats = stats['duo'] || stats['duo-fpp'] || {};
+        const squadStats = stats['squad'] || stats['squad-fpp'] || {};
         
         // 전체 통계 계산
         const totalRounds = (soloStats.roundsPlayed || 0) + 
@@ -143,11 +174,12 @@ async function updateAllMembers() {
             const member = members[memberId];
             console.log(`👤 ${member.name} 업데이트 중...`);
             
-            // API 호출 제한을 위한 딜레이 (1초)
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // API 호출 제한을 위한 딜레이 (2초로 증가)
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
-            // 플레이어 통계 가져오기
-            const stats = await fetchPlayerStats(memberId, member.name);
+            // 플레이어 통계 가져오기 (originalId 사용)
+            const playerId = member.originalId || memberId;
+            const stats = await fetchPlayerStats(playerId, member.name);
             
             if (stats) {
                 // 업데이트할 데이터 준비
