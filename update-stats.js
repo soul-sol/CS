@@ -162,8 +162,8 @@ async function updateAllMembers() {
             const member = members[memberId];
             console.log(`👤 ${member.name} 업데이트 중...`);
             
-            // API 호출 제한을 위한 딜레이 (3초로 조정 - 1시간 주기 실행)
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            // API 호출 제한을 위한 딜레이 (20초 - rate limit 안전 마진)
+            await new Promise(resolve => setTimeout(resolve, 20000));
             
             // 플레이어 통계 가져오기 (originalId 사용)
             const playerId = member.originalId || memberId;
