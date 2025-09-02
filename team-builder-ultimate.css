@@ -157,14 +157,14 @@
     gap: 25px;
 }
 
-/* Team Options */
+/* Team Options - 새로운 카드 형태 디자인 */
 .team-options {
-    background: linear-gradient(135deg, rgba(20, 25, 37, 0.9), rgba(30, 35, 50, 0.9));
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: var(--shadow-card);
+    background: linear-gradient(135deg, rgba(20, 25, 37, 0.95), rgba(30, 35, 50, 0.95));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     animation: fadeInRight 0.6s ease-out 0.1s both;
 }
 
@@ -179,29 +179,173 @@
     }
 }
 
-.team-options h2 {
-    /* font-family는 style-ultimate.css에서 상속 */
-    font-size: 1.3rem;
+.options-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.options-header h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
     color: var(--text-primary);
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+    letter-spacing: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.option-group {
-    margin-bottom: 20px;
+.options-icon {
+    font-size: 1.3rem;
 }
 
-.option-group label {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 8px;
+/* 옵션 카드 그리드 */
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.option-card {
+    background: linear-gradient(135deg, rgba(10, 14, 26, 0.9), rgba(20, 25, 37, 0.9));
+    border: 1px solid rgba(153, 69, 255, 0.2);
+    border-radius: 15px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.option-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 212, 255, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+}
+
+.option-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.option-icon {
+    font-size: 1.5rem;
+}
+
+.option-card h3 {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
+    margin: 0;
+}
+
+.option-card-body {
+    text-align: center;
+}
+
+/* 팀 개수 선택기 */
+.team-count-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.count-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(153, 69, 255, 0.2), rgba(0, 212, 255, 0.2));
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.count-btn:hover {
+    background: linear-gradient(135deg, rgba(153, 69, 255, 0.4), rgba(0, 212, 255, 0.4));
+    transform: scale(1.1);
+}
+
+.team-count-display {
+    width: 60px;
+    height: 40px;
+    background: rgba(10, 14, 26, 0.8);
+    border: 2px solid rgba(0, 212, 255, 0.5);
+    border-radius: 10px;
+    color: var(--neon-blue);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.team-count-display:focus {
+    outline: none;
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+/* 스위치 토글 */
+.switch-label {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+    margin-bottom: 10px;
+}
+
+.switch-label input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(100, 100, 100, 0.3);
+    border: 1px solid rgba(153, 69, 255, 0.3);
+    border-radius: 30px;
+    transition: 0.4s;
+}
+
+.switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 3px;
+    background: linear-gradient(135deg, #fff, #f0f0f0);
+    border-radius: 50%;
+    transition: 0.4s;
+}
+
+.switch-label input:checked + .switch-slider {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.5), rgba(153, 69, 255, 0.5));
+    border-color: var(--neon-blue);
+}
+
+.switch-label input:checked + .switch-slider:before {
+    transform: translateX(30px);
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+}
+
+.option-description {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
 }
 
 .team-count-input {
@@ -248,28 +392,41 @@
     cursor: pointer;
 }
 
-/* Generate Button */
-.btn-generate {
+/* Generate Button Container - 하단 배치 */
+.generate-button-container {
+    margin-top: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(10, 14, 26, 0.6), rgba(20, 25, 37, 0.6));
+    border-radius: 20px;
+    border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+/* Generate Button - 더 화려한 디자인 */
+.btn-generate-teams {
     width: 100%;
-    padding: 15px;
+    padding: 20px;
     background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
     color: white;
     border: none;
-    border-radius: 10px;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 600;
+    border-radius: 15px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+    box-shadow: 0 5px 30px rgba(0, 212, 255, 0.5);
 }
 
-.btn-generate::before {
-    content: '';
+.btn-generate-teams:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 50px rgba(0, 212, 255, 0.7);
+}
+
+.btn-glow {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -278,23 +435,49 @@
     background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    transition: width 0.5s, height 0.5s;
+    transition: width 0.6s, height 0.6s;
 }
 
-.btn-generate:hover::before {
-    width: 400px;
-    height: 400px;
+.btn-generate-teams:hover .btn-glow {
+    width: 500px;
+    height: 500px;
 }
 
-.btn-generate:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 40px rgba(0, 212, 255, 0.6);
+.btn-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 1;
 }
 
-.btn-generate:disabled {
+.btn-generate-teams svg {
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn-generate-teams:hover svg {
+    animation-duration: 0.5s;
+}
+
+.btn-generate-teams:disabled {
     background: linear-gradient(135deg, rgba(99, 110, 114, 0.5), rgba(149, 175, 192, 0.5));
     cursor: not-allowed;
     box-shadow: none;
+    transform: none;
+}
+
+.btn-generate-teams:disabled svg {
+    animation: none;
 }
 
 /* Team Results */

@@ -474,6 +474,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Firebase 초기화
     await initializeFirebase();
     
+    // 팀 개수 변경 함수
+    function changeTeamCount(change) {
+        const currentValue = parseInt(teamCountInput.value);
+        const newValue = currentValue + change;
+        
+        if (newValue >= 2 && newValue <= 10) {
+            teamCountInput.value = newValue;
+        }
+    }
+
+    // 전역에서 접근 가능하도록 설정
+    window.changeTeamCount = changeTeamCount;
+
     // 이벤트 리스너 등록
     selectAllBtn.addEventListener('click', selectAll);
     deselectAllBtn.addEventListener('click', deselectAll);

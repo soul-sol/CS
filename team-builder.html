@@ -91,36 +91,57 @@
             <div class="team-configuration">
                 <!-- 팀 구성 옵션 -->
                 <div class="team-options">
-                    <h2>팀 구성 옵션</h2>
+                    <div class="options-header">
+                        <h2>
+                            <span class="options-icon">⚙️</span>
+                            팀 구성 설정
+                        </h2>
+                    </div>
                     
-                    <div class="option-group">
-                        <label for="teamCount">팀 개수</label>
-                        <input type="number" id="teamCount" min="2" max="10" value="4" class="input-number">
-                        <span class="option-hint">2~10팀까지 가능</span>
-                    </div>
+                    <div class="options-grid">
+                        <div class="option-card">
+                            <div class="option-card-header">
+                                <span class="option-icon">👥</span>
+                                <h3>팀 개수</h3>
+                            </div>
+                            <div class="option-card-body">
+                                <div class="team-count-selector">
+                                    <button class="count-btn minus" onclick="changeTeamCount(-1)">-</button>
+                                    <input type="number" id="teamCount" min="2" max="10" value="4" class="team-count-display">
+                                    <button class="count-btn plus" onclick="changeTeamCount(1)">+</button>
+                                </div>
+                                <p class="option-description">2~10팀까지 가능</p>
+                            </div>
+                        </div>
 
-                    <div class="option-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="requireTier1" checked>
-                            <span>각 팀에 1티어 멤버 최소 1명 배치</span>
-                        </label>
-                        <span class="option-hint">1티어 멤버를 각 팀에 균등 배분합니다</span>
-                    </div>
+                        <div class="option-card">
+                            <div class="option-card-header">
+                                <span class="option-icon">👑</span>
+                                <h3>1티어 배치</h3>
+                            </div>
+                            <div class="option-card-body">
+                                <label class="switch-label">
+                                    <input type="checkbox" id="requireTier1" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                                <p class="option-description">각 팀에 최소 1명</p>
+                            </div>
+                        </div>
 
-                    <div class="option-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="balanceByStats">
-                            <span>실력 기준 균형 맞추기</span>
-                        </label>
-                        <span class="option-hint">K/D 비율을 기준으로 팀 밸런스를 맞춥니다</span>
+                        <div class="option-card">
+                            <div class="option-card-header">
+                                <span class="option-icon">⚖️</span>
+                                <h3>실력 균형</h3>
+                            </div>
+                            <div class="option-card-body">
+                                <label class="switch-label">
+                                    <input type="checkbox" id="balanceByStats">
+                                    <span class="switch-slider"></span>
+                                </label>
+                                <p class="option-description">KDA 기준 밸런스</p>
+                            </div>
+                        </div>
                     </div>
-
-                    <button id="generateTeamsBtn" class="btn-primary">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2v20M2 12h20"></path>
-                        </svg>
-                        팀 생성하기
-                    </button>
                 </div>
 
                 <!-- 팀 구성 결과 -->
@@ -146,6 +167,20 @@
                             결과 복사
                         </button>
                     </div>
+                </div>
+
+                <!-- 팀 생성 버튼 -->
+                <div class="generate-button-container">
+                    <button id="generateTeamsBtn" class="btn-generate-teams">
+                        <span class="btn-glow"></span>
+                        <span class="btn-content">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 6v12m-6-6h12"></path>
+                            </svg>
+                            팀 생성하기
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
