@@ -357,7 +357,6 @@ function displayTeams(teams) {
     }).join('');
     
     teamsDisplay.innerHTML = `
-        <h2>팀 구성 결과</h2>
         <div class="teams-grid">
             ${teamsHtml}
         </div>
