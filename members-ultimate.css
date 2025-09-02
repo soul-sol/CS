@@ -12,14 +12,7 @@
     animation: fadeInDown 0.6s ease-out;
 }
 
-.section-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.3rem;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 20px;
-}
+
 
 .add-member-form {
     display: flex;
@@ -202,7 +195,111 @@
     border-bottom: 1px solid rgba(153, 69, 255, 0.3);
 }
 
-/* Members List */
+/* Members Section */
+.members-section {
+    background: linear-gradient(135deg, rgba(20, 25, 37, 0.9), rgba(30, 35, 50, 0.9));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow-card);
+}
+
+.section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.status-icon {
+    font-size: 1.2rem;
+}
+
+/* Members Grid */
+.members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+/* Simple Member Card */
+.member-simple-card {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: rgba(10, 14, 26, 0.6);
+    border: 1px solid rgba(153, 69, 255, 0.2);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.member-simple-card:hover {
+    background: rgba(153, 69, 255, 0.15);
+    border-color: rgba(153, 69, 255, 0.5);
+    transform: translateX(5px);
+}
+
+.status-dot {
+    font-size: 1rem;
+    margin-right: 10px;
+}
+
+.member-simple-card .member-name {
+    flex: 1;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.member-simple-card .member-delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.9);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.member-simple-card:hover .member-delete-btn {
+    opacity: 1;
+}
+
+.member-simple-card .member-delete-btn:hover {
+    background: rgba(220, 38, 38, 1);
+    transform: scale(1.1);
+}
+
+.no-members {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Members List - 기존 스타일 유지 */
 .members-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

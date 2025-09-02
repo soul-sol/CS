@@ -58,10 +58,11 @@ async function initializeFirebase() {
 
 // 멤버 표시 업데이트
 function updateMemberDisplay() {
-    const allMembersContainer = document.getElementById('allMembers');
+    const onlineContainer = document.getElementById('onlineMembers');
+    const offlineContainer = document.getElementById('offlineMembers');
     
-    if (!allMembersContainer) {
-        console.error('Members container not found');
+    if (!onlineContainer || !offlineContainer) {
+        console.error('Members containers not found');
         return;
     }
     
@@ -70,45 +71,27 @@ function updateMemberDisplay() {
         id: id
     }));
     
-    // 이름으로 정렬
-    membersArray.sort((a, b) => a.name.localeCompare(b.name));
+    // 온라인/오프라인 분리
+    const onlineMembers = membersArray.filter(m => m.status === 'online').sort((a, b) => a.name.localeCompare(b.name));
+    const offlineMembers = membersArray.filter(m => m.status !== 'online').sort((a, b) => a.name.localeCompare(b.name));
     
-    allMembersContainer.innerHTML = membersArray.map(member => {
-        // 티어 텍스트에서 하이픈 제거
-        const tierDisplay = member.stats?.tier ? member.stats.tier.replace('-', ' ') : '';
-        
-        return `
-        <div class="member-card ${member.status === 'online' ? 'online' : 'offline'}">
-            <div class="member-header">
-                <h3 class="member-name">${member.name}</h3>
-                <div class="member-actions">
-                    <span class="status-indicator">
-                        ${member.status === 'online' ? '🟢' : '⚫'}
-                    </span>
-                    <button class="member-delete-btn" onclick="deleteMember('${member.id}')" title="멤버 삭제">×</button>
-                </div>
-            </div>
-            <div class="member-info">
-                <div class="info-item">
-                    <span class="info-label">KDA</span>
-                    <span class="info-value">${member.stats?.kda || '0.0'}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">DMG</span>
-                    <span class="info-value">${member.stats?.avgDamage || 0}</span>
-                </div>
-                ${tierDisplay ? `
-                <div class="info-item">
-                    <span class="info-label">티어</span>
-                    <span class="info-value tier-badge">${tierDisplay}</span>
-                </div>
-                ` : ''}
-            </div>
-            <button class="status-toggle-btn" onclick="toggleStatus('${member.id}')">
-                ${member.status === 'online' ? '오프라인으로' : '온라인으로'}
-            </button>
+    // 온라인 멤버 표시
+    onlineContainer.innerHTML = onlineMembers.map(member => `
+        <div class="member-simple-card" onclick="toggleStatus('${member.id}')">
+            <span class="status-dot online">🟢</span>
+            <span class="member-name">${member.name}</span>
+            <button class="member-delete-btn" onclick="event.stopPropagation(); deleteMember('${member.id}')" title="멤버 삭제">×</button>
         </div>
-    `}).join('');
+    `).join('') || '<div class="no-members">온라인 멤버가 없습니다</div>';
+    
+    // 오프라인 멤버 표시
+    offlineContainer.innerHTML = offlineMembers.map(member => `
+        <div class="member-simple-card" onclick="toggleStatus('${member.id}')">
+            <span class="status-dot offline">⚫</span>
+            <span class="member-name">${member.name}</span>
+            <button class="member-delete-btn" onclick="event.stopPropagation(); deleteMember('${member.id}')" title="멤버 삭제">×</button>
+        </div>
+    `).join('') || '<div class="no-members">오프라인 멤버가 없습니다</div>';
 }
 
 // 상태 개수 업데이트
