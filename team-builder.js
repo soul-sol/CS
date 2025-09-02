@@ -65,19 +65,24 @@ function displayMembers() {
         unassigned: []
     };
     
-    // 디버깅: 전체 멤버 수와 상태 확인
+    // 디버깅: 온라인 멤버 수와 상태 확인
+    const onlineMembers = Object.values(members).filter(m => !m.status || m.status === 'online');
     console.log('Total members:', Object.keys(members).length);
+    console.log('Online members:', onlineMembers.length);
     console.log('Members status:', Object.values(members).map(m => ({
         name: m.name,
         status: m.status,
         tier: m.tier
     })));
     
-    // 모든 멤버를 티어별로 그룹화 (온라인 필터 제거)
+    // 온라인 멤버만 티어별로 그룹화
     Object.values(members).forEach(member => {
-        const tier = member.tier || 'unassigned';
-        if (tierGroups[tier]) {
-            tierGroups[tier].push(member);
+        // 온라인 상태인 멤버만 포함 (status가 없거나 'online'인 경우)
+        if (!member.status || member.status === 'online') {
+            const tier = member.tier || 'unassigned';
+            if (tierGroups[tier]) {
+                tierGroups[tier].push(member);
+            }
         }
     });
     
@@ -144,10 +149,12 @@ function updateSelectedCount() {
     selectedCountElement.textContent = selectedMembers.size;
 }
 
-// 전체 선택
+// 전체 선택 (온라인 멤버만)
 function selectAll() {
     Object.values(members).forEach(member => {
-        selectedMembers.add(member.id);
+        // 온라인 멤버만 선택
+        if (!member.status || member.status === 'online') {
+            selectedMembers.add(member.id);
     });
     displayMembers();
 }
@@ -225,10 +232,10 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
     
     // 나머지 멤버 배치
     if (balanceByStats) {
-        // K/D 기준으로 정렬
+        // K/D 기준으로 정렬 (stats 구조 수정)
         availableMembers.sort((a, b) => {
-            const kdA = a.stats ? parseFloat(a.stats.squad.kd) : 0;
-            const kdB = b.stats ? parseFloat(b.stats.squad.kd) : 0;
+            const kdA = a.stats ? parseFloat(a.stats.kd || a.stats.squad?.kd || 0) : 0;
+            const kdB = b.stats ? parseFloat(b.stats.kd || b.stats.squad?.kd || 0) : 0;
             return kdB - kdA;
         });
         

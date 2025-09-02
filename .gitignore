@@ -17,6 +17,10 @@ npm-debug.log*
 .env
 .env.local
 
+# Firebase Service Account (NEVER commit this!)
+firebase-service-account.json
+*-service-account.json
+
 # Build
 dist/
 build/

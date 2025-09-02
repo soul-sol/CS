@@ -339,31 +339,41 @@ function updateTierDisplay() {
     updateTierContent(tier4Element, tierGroups.tier4, 'tier4');
     updateTierContent(unassignedElement, tierGroups.unassigned, 'unassigned');
     
-    // 카운트 업데이트
-    tier1CountElement.textContent = tierGroups.tier1.length;
-    tier2CountElement.textContent = tierGroups.tier2.length;
-    tier3CountElement.textContent = tierGroups.tier3.length;
-    tier4CountElement.textContent = tierGroups.tier4.length;
-    unassignedCountElement.textContent = tierGroups.unassigned.length;
+    // 온라인 멤버 카운트 업데이트
+    const onlineTier1 = tierGroups.tier1.filter(m => !m.status || m.status === 'online').length;
+    const onlineTier2 = tierGroups.tier2.filter(m => !m.status || m.status === 'online').length;
+    const onlineTier3 = tierGroups.tier3.filter(m => !m.status || m.status === 'online').length;
+    const onlineTier4 = tierGroups.tier4.filter(m => !m.status || m.status === 'online').length;
+    const onlineUnassigned = tierGroups.unassigned.filter(m => !m.status || m.status === 'online').length;
     
-    // 총 멤버 수 업데이트
+    tier1CountElement.textContent = onlineTier1;
+    tier2CountElement.textContent = onlineTier2;
+    tier3CountElement.textContent = onlineTier3;
+    tier4CountElement.textContent = onlineTier4;
+    unassignedCountElement.textContent = onlineUnassigned;
+    
+    // 온라인/전체 멤버 수 업데이트
+    const onlineMembers = Object.values(members).filter(m => !m.status || m.status === 'online').length;
     const totalMembers = Object.keys(members).length;
-    totalMembersElement.textContent = totalMembers;
+    totalMembersElement.textContent = `${onlineMembers} / ${totalMembers}`;
 }
 
-// 티어 콘텐츠 업데이트
+// 티어 콘텐츠 업데이트 (온라인 멤버만 표시)
 function updateTierContent(element, memberList, tier) {
-    if (memberList.length === 0) {
+    // 온라인 멤버만 필터링
+    const onlineMembers = memberList.filter(member => !member.status || member.status === 'online');
+    
+    if (onlineMembers.length === 0) {
         element.innerHTML = `
             <div class="tier-drop-zone">
-                <p class="drop-hint">멤버를 여기로 드래그하세요</p>
+                <p class="drop-hint">온라인 멤버가 없습니다</p>
             </div>
         `;
         return;
     }
     
     const tierClass = getTierClass(tier);
-    element.innerHTML = memberList.map(member => `
+    element.innerHTML = onlineMembers.map(member => `
         <div class="member-card ${tierClass}" draggable="true" data-member-id="${member.id}">
             <div class="member-card-header">
                 <h3 class="member-name">${member.name}</h3>
