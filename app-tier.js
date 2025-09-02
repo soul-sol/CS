@@ -378,7 +378,19 @@ function updateTierContent(element, memberList, tier) {
             <div class="member-card-header">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <h3 class="member-name" style="margin: 0;">${member.name}</h3>
-                    ${member.stats?.tier ? `<span style="font-size: 11px; color: #ffd700; font-weight: 600; padding: 2px 6px; background: rgba(255, 215, 0, 0.15); border-radius: 3px;">${member.stats.tier}</span>` : ''}
+                    ${member.stats?.tier ? (() => {
+                        const tierName = member.stats.tier.split(' ')[0].toLowerCase();
+                        const tierColors = {
+                            'bronze': { bg: 'rgba(205, 127, 50, 0.2)', color: '#CD7F32', border: '#CD7F32' },
+                            'silver': { bg: 'rgba(192, 192, 192, 0.2)', color: '#C0C0C0', border: '#C0C0C0' },
+                            'gold': { bg: 'rgba(255, 215, 0, 0.2)', color: '#FFD700', border: '#FFD700' },
+                            'platinum': { bg: 'rgba(46, 213, 197, 0.2)', color: '#2ED5C5', border: '#2ED5C5' },
+                            'diamond': { bg: 'rgba(104, 143, 255, 0.2)', color: '#688FFF', border: '#688FFF' },
+                            'master': { bg: 'rgba(255, 71, 87, 0.2)', color: '#FF4757', border: '#FF4757' }
+                        };
+                        const style = tierColors[tierName] || tierColors['bronze'];
+                        return `<span style="font-size: 11px; color: ${style.color}; font-weight: 700; padding: 3px 8px; background: ${style.bg}; border: 1px solid ${style.border}; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">${member.stats.tier}</span>`;
+                    })() : ''}
                 </div>
                 <button class="member-remove" onclick="removeMember('${member.id}')">×</button>
             </div>
