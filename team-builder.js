@@ -115,8 +115,8 @@ function displayTierMembers(elementId, memberList, tier) {
     
     container.innerHTML = memberList.map(member => {
         const isChecked = selectedMembers.has(member.id);
-        // stats 구조 수정: stats.kd로 직접 접근
-        const kdRatio = member.stats ? (member.stats.kd || member.stats.squad?.kd || '0.00') : '0.00';
+        // stats 구조: Firebase에서 kda 사용
+        const kdRatio = member.stats ? (member.stats.kda || '0.0') : '0.0';
         
         return `
             <label class="member-checkbox">
@@ -127,7 +127,7 @@ function displayTierMembers(elementId, memberList, tier) {
                        onchange="toggleMember('${member.id}')">
                 <span class="member-info">
                     <span class="member-name">${member.name}</span>
-                    <span class="member-kd">K/D: ${kdRatio}</span>
+                    <span class="member-kd">KDA: ${kdRatio}</span>
                 </span>
             </label>
         `;
@@ -189,10 +189,10 @@ function generateTeams() {
         return;
     }
     
-    // 1티어 필수 옵션 체크
+    // 1티어 필수 옵션 체크 (최소 1명이 있는지만 확인)
     const tier1Members = selectedMembersList.filter(m => m.tier === 'tier1');
-    if (requireTier1 && tier1Members.length < teamCount) {
-        showMessage(`1티어 멤버(${tier1Members.length}명)가 팀 개수(${teamCount})보다 적어 각 팀에 배치할 수 없습니다.`, 'error');
+    if (requireTier1 && tier1Members.length === 0) {
+        showMessage(`1티어 멤버가 없습니다. 최소 1명 이상 필요합니다.`, 'error');
         return;
     }
     
@@ -212,19 +212,27 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
     const teams = Array.from({ length: teamCount }, () => []);
     let availableMembers = [...membersList];
     
-    // 1티어 먼저 배치
+    // 1티어 먼저 배치 (가능한 팀에만)
     if (requireTier1) {
         const tier1Members = availableMembers.filter(m => m.tier === 'tier1');
         const otherMembers = availableMembers.filter(m => m.tier !== 'tier1');
         
-        // 1티어를 각 팀에 하나씩 배치
+        // 1티어를 각 팀에 하나씩 배치 (있는 만큼만)
         tier1Members.forEach((member, index) => {
             if (index < teamCount) {
+                // 팀 수보다 적으면 있는 만큼만 배치
                 teams[index].push(member);
             } else {
-                // 남은 1티어는 랜덤 배치
-                const randomTeam = Math.floor(Math.random() * teamCount);
-                teams[randomTeam].push(member);
+                // 남은 1티어는 가장 적은 팀에 배치
+                let minTeamIndex = 0;
+                let minTeamSize = teams[0].length;
+                for (let i = 1; i < teamCount; i++) {
+                    if (teams[i].length < minTeamSize) {
+                        minTeamSize = teams[i].length;
+                        minTeamIndex = i;
+                    }
+                }
+                teams[minTeamIndex].push(member);
             }
         });
         
@@ -233,10 +241,10 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
     
     // 나머지 멤버 배치
     if (balanceByStats) {
-        // K/D 기준으로 정렬 (stats 구조 수정)
+        // KDA 기준으로 정렬 (Firebase stats 구조 사용)
         availableMembers.sort((a, b) => {
-            const kdA = a.stats ? parseFloat(a.stats.kd || a.stats.squad?.kd || 0) : 0;
-            const kdB = b.stats ? parseFloat(b.stats.kd || b.stats.squad?.kd || 0) : 0;
+            const kdA = a.stats ? parseFloat(a.stats.kda || 0) : 0;
+            const kdB = b.stats ? parseFloat(b.stats.kda || 0) : 0;
             return kdB - kdA;
         });
         
@@ -287,7 +295,7 @@ function displayTeams(teams) {
                     <span class="team-size">${team.length}명</span>
                 </div>
                 <div class="team-stats">
-                    <span>평균 K/D: ${teamKD}</span>
+                    <span>평균 KDA: ${teamKD}</span>
                     <span>${tierComposition}</span>
                 </div>
                 <div class="team-members">
@@ -312,10 +320,10 @@ function displayTeams(teams) {
     resultActions.classList.remove('hidden');
 }
 
-// 팀 평균 K/D 계산
+// 팀 평균 KDA 계산
 function calculateTeamKD(team) {
     const totalKD = team.reduce((sum, member) => {
-        const kd = member.stats ? parseFloat(member.stats.kd || member.stats.squad?.kd || 0) : 0;
+        const kd = member.stats ? parseFloat(member.stats.kda || 0) : 0;
         return sum + kd;
     }, 0);
     
