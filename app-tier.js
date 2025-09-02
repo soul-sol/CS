@@ -376,15 +376,18 @@ function updateTierContent(element, memberList, tier) {
     element.innerHTML = onlineMembers.map(member => `
         <div class="member-card ${tierClass}" draggable="true" data-member-id="${member.id}">
             <div class="member-card-header">
-                <h3 class="member-name">${member.name}</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h3 class="member-name" style="margin: 0;">${member.name}</h3>
+                    ${member.stats?.tier ? `<span style="font-size: 11px; color: #ffd700; font-weight: 600; padding: 2px 6px; background: rgba(255, 215, 0, 0.15); border-radius: 3px;">${member.stats.tier}</span>` : ''}
+                </div>
                 <button class="member-remove" onclick="removeMember('${member.id}')">×</button>
             </div>
             <div class="member-card-stats">
                 ${member.stats ? `
                     <div class="stats-grid-compact">
                         <div class="stat-item-compact">
-                            <span class="stat-label">${member.stats.isRanked ? '🏆 K/D' : 'K/D'}</span>
-                            <span class="stat-value">${member.stats.kd || '0.00'}</span>
+                            <span class="stat-label">KDA</span>
+                            <span class="stat-value">${member.stats.kda || '0.0'}</span>
                         </div>
                         <div class="stat-item-compact">
                             <span class="stat-label">DMG</span>
@@ -394,8 +397,8 @@ function updateTierContent(element, memberList, tier) {
                 ` : `
                     <div class="stats-grid-compact">
                         <div class="stat-item-compact">
-                            <span class="stat-label">K/D</span>
-                            <span class="stat-value">0.00</span>
+                            <span class="stat-label">KDA</span>
+                            <span class="stat-value">0.0</span>
                         </div>
                         <div class="stat-item-compact">
                             <span class="stat-label">DMG</span>
