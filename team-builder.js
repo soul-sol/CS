@@ -248,25 +248,39 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
             return kdB - kdA;
         });
         
-        // 스네이크 드래프트 방식으로 배치 (공평한 분배)
-        let teamIndex = 0;
-        let direction = 1;
-        
+        // 균등 배치: 가장 적은 팀에 우선 배치
         availableMembers.forEach(member => {
-            teams[teamIndex].push(member);
+            // 현재 가장 인원이 적은 팀 찾기
+            let minTeamIndex = 0;
+            let minTeamSize = teams[0].length;
             
-            teamIndex += direction;
-            if (teamIndex >= teamCount || teamIndex < 0) {
-                direction *= -1;
-                teamIndex += direction;
+            for (let i = 1; i < teamCount; i++) {
+                if (teams[i].length < minTeamSize) {
+                    minTeamSize = teams[i].length;
+                    minTeamIndex = i;
+                }
             }
+            
+            teams[minTeamIndex].push(member);
         });
     } else {
-        // 랜덤 배치
+        // 랜덤 배치 - 균등하게 분배
         shuffleArray(availableMembers);
         
-        availableMembers.forEach((member, index) => {
-            teams[index % teamCount].push(member);
+        // 균등 배치: 가장 적은 팀에 우선 배치
+        availableMembers.forEach(member => {
+            // 현재 가장 인원이 적은 팀 찾기
+            let minTeamIndex = 0;
+            let minTeamSize = teams[0].length;
+            
+            for (let i = 1; i < teamCount; i++) {
+                if (teams[i].length < minTeamSize) {
+                    minTeamSize = teams[i].length;
+                    minTeamIndex = i;
+                }
+            }
+            
+            teams[minTeamIndex].push(member);
         });
     }
     
