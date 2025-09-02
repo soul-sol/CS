@@ -33,7 +33,6 @@ function waitForFirebase() {
 // DOM 요소
 const onlineCountElement = document.getElementById('onlineCount');
 const offlineCountElement = document.getElementById('offlineCount');
-const totalCountElement = document.getElementById('totalCount');
 const messageElement = document.getElementById('message');
 const addMemberMessageElement = document.getElementById('addMemberMessage');
 const playerNameInput = document.getElementById('playerNameInput');
@@ -98,16 +97,12 @@ function updateMemberDisplay() {
 function updateStatusCounts() {
     const onlineMembers = Object.values(members).filter(m => m.status === 'online');
     const offlineMembers = Object.values(members).filter(m => m.status !== 'online');
-    const totalMembers = Object.values(members).length;
     
     if (onlineCountElement) {
         onlineCountElement.textContent = onlineMembers.length;
     }
     if (offlineCountElement) {
         offlineCountElement.textContent = offlineMembers.length;
-    }
-    if (totalCountElement) {
-        totalCountElement.textContent = totalMembers;
     }
 }
 
