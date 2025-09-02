@@ -17,14 +17,27 @@
             </div>
             <div class="header-text">
                 <h1 class="page-title">CountShot Members</h1>
-                <p class="subtitle">멤버 온라인 상태 관리</p>
+                <p class="subtitle">멤버 관리 시스템</p>
             </div>
             <nav class="header-nav">
                 <a href="index.html" class="nav-link">티어 관리</a>
-                <a href="members.html" class="nav-link active">멤버 상태</a>
+                <a href="members.html" class="nav-link active">멤버 관리</a>
                 <a href="team-builder.html" class="nav-link">팀 빌더</a>
             </nav>
         </header>
+
+        <!-- 멤버 추가 섹션 -->
+        <div class="add-member-section">
+            <h2 class="section-title">새 멤버 추가</h2>
+            <div class="add-member-form">
+                <input type="text" id="playerNameInput" placeholder="PUBG 닉네임 입력" class="input-field">
+                <button id="addMemberBtn" class="btn-add-member">
+                    <span class="btn-icon">+</span>
+                    멤버 추가
+                </button>
+            </div>
+            <div id="addMemberMessage" class="message hidden"></div>
+        </div>
 
         <!-- 온라인 상태 요약 -->
         <div class="online-summary">
@@ -40,6 +53,13 @@
                 <div class="summary-info">
                     <span class="summary-label">오프라인</span>
                     <span class="summary-count" id="offlineCount">0</span>
+                </div>
+            </div>
+            <div class="summary-card total-card">
+                <div class="summary-icon">👥</div>
+                <div class="summary-info">
+                    <span class="summary-label">전체</span>
+                    <span class="summary-count" id="totalCount">0</span>
                 </div>
             </div>
         </div>

@@ -376,23 +376,7 @@ function updateTierContent(element, memberList, tier) {
     element.innerHTML = onlineMembers.map(member => `
         <div class="member-card ${tierClass}" draggable="true" data-member-id="${member.id}">
             <div class="member-card-header">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <h3 class="member-name" style="margin: 0;">${member.name}</h3>
-                    ${member.stats?.tier ? (() => {
-                        const tierName = member.stats.tier.split(' ')[0].toLowerCase();
-                        const tierColors = {
-                            'bronze': { bg: 'rgba(205, 127, 50, 0.2)', color: '#CD7F32', border: '#CD7F32' },
-                            'silver': { bg: 'rgba(192, 192, 192, 0.2)', color: '#C0C0C0', border: '#C0C0C0' },
-                            'gold': { bg: 'rgba(255, 215, 0, 0.2)', color: '#FFD700', border: '#FFD700' },
-                            'platinum': { bg: 'rgba(46, 213, 197, 0.2)', color: '#2ED5C5', border: '#2ED5C5' },
-                            'diamond': { bg: 'rgba(104, 143, 255, 0.2)', color: '#688FFF', border: '#688FFF' },
-                            'master': { bg: 'rgba(255, 71, 87, 0.2)', color: '#FF4757', border: '#FF4757' }
-                        };
-                        const style = tierColors[tierName] || tierColors['bronze'];
-                        return `<span style="font-size: 11px; color: ${style.color}; font-weight: 700; padding: 3px 8px; background: ${style.bg}; border: 1px solid ${style.border}; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">${member.stats.tier}</span>`;
-                    })() : ''}
-                </div>
-                <button class="member-remove" onclick="removeMember('${member.id}')">×</button>
+                <h3 class="member-name">${member.name}</h3>
             </div>
             <div class="member-card-stats">
                 ${member.stats ? `
@@ -419,7 +403,75 @@ function updateTierContent(element, memberList, tier) {
                     </div>
                 `}
             </div>
-            <button class="member-details-btn" onclick="showMemberDetails('${member.id}')">상세</button>
+            ${member.stats?.tier ? (() => {
+                const tierText = member.stats.tier.replace(/[-]/g, ' ');
+                const tierName = member.stats.tier.split(/[-\s]/)[0].toLowerCase();
+                const tierColors = {
+                    'bronze': { 
+                        bg: 'linear-gradient(135deg, #8B4513, #CD7F32)', 
+                        color: '#FFF',
+                        shadow: '0 4px 15px rgba(139, 69, 19, 0.3)',
+                        glow: 'none'
+                    },
+                    'silver': { 
+                        bg: 'linear-gradient(135deg, #A0A0A0, #C0C0C0)', 
+                        color: '#FFF',
+                        shadow: '0 4px 15px rgba(192, 192, 192, 0.4)',
+                        glow: 'none'
+                    },
+                    'gold': { 
+                        bg: 'linear-gradient(135deg, #FFB700, #FFD700)', 
+                        color: '#000',
+                        shadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
+                        glow: '0 0 10px rgba(255, 215, 0, 0.3)'
+                    },
+                    'platinum': { 
+                        bg: 'linear-gradient(135deg, #00D4B5, #2ED5C5)', 
+                        color: '#FFF',
+                        shadow: '0 4px 20px rgba(46, 213, 197, 0.5)',
+                        glow: '0 0 15px rgba(46, 213, 197, 0.4)'
+                    },
+                    'diamond': { 
+                        bg: 'linear-gradient(135deg, #4A69FF, #688FFF)', 
+                        color: '#FFF',
+                        shadow: '0 4px 25px rgba(104, 143, 255, 0.6)',
+                        glow: '0 0 20px rgba(104, 143, 255, 0.5)'
+                    },
+                    'master': { 
+                        bg: 'linear-gradient(135deg, #FF2E63, #FF4757)', 
+                        color: '#FFF',
+                        shadow: '0 4px 30px rgba(255, 71, 87, 0.7)',
+                        glow: '0 0 25px rgba(255, 71, 87, 0.6)',
+                        animation: 'pulse 2s infinite'
+                    }
+                };
+                const style = tierColors[tierName] || tierColors['bronze'];
+                return `<div class="member-tier-badge" style="
+                    background: ${style.bg}; 
+                    color: ${style.color}; 
+                    padding: 10px; 
+                    text-align: center; 
+                    font-weight: 800; 
+                    font-size: 1rem; 
+                    letter-spacing: 2px; 
+                    border-radius: 0 0 12px 12px; 
+                    margin-top: 15px;
+                    box-shadow: ${style.shadow};
+                    text-shadow: ${style.glow};
+                    text-transform: uppercase;
+                    font-family: 'Orbitron', sans-serif;
+                    ${tierName === 'master' ? 'animation: glow 2s ease-in-out infinite;' : ''}
+                ">${tierText.toUpperCase()}</div>`;
+            })() : `<div class="member-tier-badge" style="
+                background: linear-gradient(135deg, rgba(50, 50, 50, 0.5), rgba(70, 70, 70, 0.5)); 
+                color: #999; 
+                padding: 10px; 
+                text-align: center; 
+                font-size: 0.9rem; 
+                border-radius: 0 0 12px 12px; 
+                margin-top: 15px;
+                font-family: 'Rajdhani', sans-serif;
+            ">UNRANKED</div>`}
         </div>
     `).join('');
     
