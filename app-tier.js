@@ -663,18 +663,8 @@ function closeMemberModal() {
     document.getElementById('memberModal').classList.add('hidden');
 }
 
-// 멤버 제거
-async function removeMember(memberId) {
-    if (confirm('이 멤버를 삭제하시겠습니까?')) {
-        try {
-            await remove(ref(database, 'members/' + memberId));
-            console.log(`Member ${memberId} removed`);
-        } catch (error) {
-            console.error('Error removing member:', error);
-            showError('멤버 삭제 중 오류가 발생했습니다.');
-        }
-    }
-}
+// 멤버 제거 - 멤버 관리 페이지로 이동됨
+// removeMember 함수는 멤버 관리 페이지에서 처리
 
 // 로딩 표시
 function showLoading() {
@@ -767,5 +757,5 @@ async function updateMemberStats(memberId) {
 
 window.showMemberDetails = showMemberDetails;
 window.updateMemberStats = updateMemberStats;
-window.removeMember = removeMember;
+// window.removeMember = removeMember; // 멤버 관리 페이지로 이동
 window.closeMemberModal = closeMemberModal;
