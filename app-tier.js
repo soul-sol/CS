@@ -404,7 +404,15 @@ function updateTierContent(element, memberList, tier) {
                 `}
             </div>
             ${member.stats?.tier ? (() => {
-                const tierText = member.stats.tier.replace(/[-]/g, ' ');
+                // 티어 텍스트 포맷팅 (첫 글자만 대문자)
+                const tierParts = member.stats.tier.replace(/[-]/g, ' ').split(' ');
+                const tierText = tierParts.map((part, index) => {
+                    if (index === 0) {
+                        // 티어 이름 (Bronze, Silver, Gold, etc.)
+                        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                    }
+                    return part; // 숫자는 그대로
+                }).join(' ');
                 const tierName = member.stats.tier.split(/[-\s]/)[0].toLowerCase();
                 const tierColors = {
                     'bronze': { 
@@ -458,10 +466,9 @@ function updateTierContent(element, memberList, tier) {
                     margin-top: 15px;
                     box-shadow: ${style.shadow};
                     text-shadow: ${style.glow};
-                    text-transform: uppercase;
                     font-family: 'Orbitron', sans-serif;
                     ${tierName === 'master' ? 'animation: glow 2s ease-in-out infinite;' : ''}
-                ">${tierText.toUpperCase()}</div>`;
+                ">${tierText}</div>`;
             })() : `<div class="member-tier-badge" style="
                 background: linear-gradient(135deg, rgba(50, 50, 50, 0.5), rgba(70, 70, 70, 0.5)); 
                 color: #999; 

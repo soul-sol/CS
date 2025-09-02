@@ -100,10 +100,11 @@ async function fetchPlayerStats(playerId, playerName) {
             const rankedData = await rankedResponse.json();
             const squadRanked = rankedData.data.attributes.rankedGameModeStats?.squad || {};
             
-            // 티어 정보 (하이픈 제거)
+            // 티어 정보 (하이픈 제거, 첫 글자만 대문자)
             let tier = null;
             if (squadRanked.currentTier) {
-                tier = `${squadRanked.currentTier.tier} ${squadRanked.currentTier.subTier}`;
+                const tierName = squadRanked.currentTier.tier.charAt(0).toUpperCase() + squadRanked.currentTier.tier.slice(1).toLowerCase();
+                tier = `${tierName} ${squadRanked.currentTier.subTier}`;
             }
             
             // 평균 데미지 계산
