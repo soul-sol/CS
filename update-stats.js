@@ -118,43 +118,14 @@ async function fetchPlayerStats(playerId, playerName) {
             };
         }
         
-        // Ranked 통계가 없으면 일반 시즌 통계 사용
-        console.log(`  ℹ️  ${playerName}의 Ranked 통계가 없어 일반 통계를 사용합니다`);
-        
-        const normalResponse = await fetch(
-            `${API_BASE_URL}/players/${playerId}/seasons/${seasonId}`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Accept': 'application/vnd.api+json'
-                }
-            }
-        );
-        
-        if (!normalResponse.ok) {
-            console.log(`  ⚠️  ${playerName}의 통계를 가져올 수 없습니다 (${normalResponse.status})`);
-            return null;
-        }
-        
-        const normalData = await normalResponse.json();
-        const stats = normalData.data.attributes.gameModeStats;
-        const squadStats = stats['squad'] || stats['squad-fpp'] || {};
-        
-        // KDA 계산 (kills + assists / deaths)
-        const deaths = squadStats.losses || (squadStats.roundsPlayed - squadStats.wins) || 1;
-        const kda = deaths > 0 ? 
-            ((squadStats.kills + squadStats.assists) / deaths).toFixed(1) : 
-            squadStats.kills.toFixed(1);
-        
-        // 평균 데미지 계산
-        const avgDamage = squadStats.roundsPlayed > 0 ? 
-            Math.round(squadStats.damageDealt / squadStats.roundsPlayed) : 0;
+        // Ranked 통계가 없으면 0으로 설정
+        console.log(`  ℹ️  ${playerName}의 Ranked 통계가 없습니다`);
         
         return {
-            // 필수 통계만 저장
+            // 기본값 0으로 설정
             tier: null,
-            kda: kda,
-            avgDamage: avgDamage  // 평균 데미지
+            kda: '0.0',
+            avgDamage: 0
         };
         
     } catch (error) {
