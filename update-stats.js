@@ -84,8 +84,57 @@ async function fetchPlayerStats(playerId, playerName) {
             return null;
         }
         
-        // 현재 시즌 통계 가져오기
-        const response = await fetch(
+        // Ranked 통계 먼저 시도
+        const rankedResponse = await fetch(
+            `${API_BASE_URL}/players/${playerId}/seasons/${seasonId}/ranked`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Accept': 'application/vnd.api+json'
+                }
+            }
+        );
+        
+        if (rankedResponse.ok) {
+            // Ranked 통계가 있는 경우
+            const rankedData = await rankedResponse.json();
+            const squadRanked = rankedData.data.attributes.rankedGameModeStats?.squad || {};
+            
+            // 티어 정보
+            let tier = null;
+            if (squadRanked.currentTier) {
+                tier = `${squadRanked.currentTier.tier}-${squadRanked.currentTier.subTier}`;
+            }
+            
+            // 평균 데미지 계산
+            const avgDamage = squadRanked.roundsPlayed > 0 ? 
+                Math.round(squadRanked.damageDealt / squadRanked.roundsPlayed) : 0;
+            
+            return {
+                // Ranked 통계
+                tier: tier,
+                kda: squadRanked.kda ? squadRanked.kda.toFixed(1) : '0.0',
+                kills: squadRanked.kills || 0,
+                deaths: squadRanked.deaths || 0,
+                assists: squadRanked.assists || 0,
+                avgDamage: avgDamage,  // 평균 데미지
+                damageDealt: Math.round(squadRanked.damageDealt || 0),
+                roundsPlayed: squadRanked.roundsPlayed || 0,
+                wins: squadRanked.wins || 0,
+                winRatio: squadRanked.winRatio ? (squadRanked.winRatio * 100).toFixed(1) : '0.0',
+                top10Ratio: squadRanked.top10Ratio ? (squadRanked.top10Ratio * 100).toFixed(1) : '0.0',
+                avgRank: squadRanked.avgRank ? squadRanked.avgRank.toFixed(1) : '0.0',
+                dBNOs: squadRanked.dBNOs || 0,  // 다운시킨 수
+                currentRankPoint: squadRanked.currentRankPoint || 0,
+                bestTier: squadRanked.bestTier ? `${squadRanked.bestTier.tier}-${squadRanked.bestTier.subTier}` : null,
+                isRanked: true
+            };
+        }
+        
+        // Ranked 통계가 없으면 일반 시즌 통계 사용
+        console.log(`  ℹ️  ${playerName}의 Ranked 통계가 없어 일반 통계를 사용합니다`);
+        
+        const normalResponse = await fetch(
             `${API_BASE_URL}/players/${playerId}/seasons/${seasonId}`,
             {
                 headers: {
@@ -95,49 +144,42 @@ async function fetchPlayerStats(playerId, playerName) {
             }
         );
         
-        if (!response.ok) {
-            console.log(`  ⚠️  ${playerName}의 통계를 가져올 수 없습니다 (${response.status})`);
+        if (!normalResponse.ok) {
+            console.log(`  ⚠️  ${playerName}의 통계를 가져올 수 없습니다 (${normalResponse.status})`);
             return null;
         }
         
-        const data = await response.json();
-        const stats = data.data.attributes.gameModeStats;
-        
-        // 주요 모드별 통계 추출 (카카오 서버는 주로 TPP)
-        const soloStats = stats['solo'] || stats['solo-fpp'] || {};
-        const duoStats = stats['duo'] || stats['duo-fpp'] || {};
+        const normalData = await normalResponse.json();
+        const stats = normalData.data.attributes.gameModeStats;
         const squadStats = stats['squad'] || stats['squad-fpp'] || {};
         
-        // 전체 통계 계산
-        const totalRounds = (soloStats.roundsPlayed || 0) + 
-                          (duoStats.roundsPlayed || 0) + 
-                          (squadStats.roundsPlayed || 0);
-        const totalKills = (soloStats.kills || 0) + 
-                         (duoStats.kills || 0) + 
-                         (squadStats.kills || 0);
-        const totalWins = (soloStats.wins || 0) + 
-                        (duoStats.wins || 0) + 
-                        (squadStats.wins || 0);
-        const totalAssists = (soloStats.assists || 0) + 
-                           (duoStats.assists || 0) + 
-                           (squadStats.assists || 0);
-        const totalDamage = (soloStats.damageDealt || 0) + 
-                          (duoStats.damageDealt || 0) + 
-                          (squadStats.damageDealt || 0);
+        // KDA 계산 (kills + assists / deaths)
+        const deaths = squadStats.losses || (squadStats.roundsPlayed - squadStats.wins) || 1;
+        const kda = deaths > 0 ? 
+            ((squadStats.kills + squadStats.assists) / deaths).toFixed(1) : 
+            squadStats.kills.toFixed(1);
+        
+        // 평균 데미지 계산
+        const avgDamage = squadStats.roundsPlayed > 0 ? 
+            Math.round(squadStats.damageDealt / squadStats.roundsPlayed) : 0;
         
         return {
-            solo: extractStats(soloStats),
-            duo: extractStats(duoStats),
-            squad: extractStats(squadStats),
-            // 간단한 전체 통계 (Firebase 스크린샷에서 본 형식)
-            assists: totalAssists,
-            avgDamage: totalRounds > 0 ? Math.round(totalDamage / totalRounds) : 0,
-            avgKills: totalRounds > 0 ? (totalKills / totalRounds).toFixed(2) : '0.00',
-            totalRounds: totalRounds,
-            totalKills: totalKills,
-            totalWins: totalWins,
-            kd: totalRounds > 0 ? (totalKills / totalRounds).toFixed(2) : '0.00',
-            winRate: totalRounds > 0 ? (totalWins / totalRounds * 100).toFixed(1) : '0.0'
+            // 일반 통계
+            tier: null,
+            kda: kda,
+            kills: squadStats.kills || 0,
+            deaths: deaths,
+            assists: squadStats.assists || 0,
+            avgDamage: avgDamage,  // 평균 데미지
+            damageDealt: Math.round(squadStats.damageDealt || 0),
+            roundsPlayed: squadStats.roundsPlayed || 0,
+            wins: squadStats.wins || 0,
+            winRatio: squadStats.roundsPlayed > 0 ? 
+                ((squadStats.wins / squadStats.roundsPlayed) * 100).toFixed(1) : '0.0',
+            top10Ratio: squadStats.roundsPlayed > 0 ? 
+                ((squadStats.top10s / squadStats.roundsPlayed) * 100).toFixed(1) : '0.0',
+            dBNOs: squadStats.dBNOs || 0,  // 다운시킨 수
+            isRanked: false
         };
         
     } catch (error) {
@@ -187,7 +229,11 @@ async function updateAllMembers() {
                 updates[`members/${memberId}/lastStatsUpdate`] = new Date().toISOString();
                 
                 console.log(`  ✅ ${member.name} 업데이트 성공`);
-                console.log(`     - K/D: ${stats.kd} | 승률: ${stats.winRate}% | 평균 데미지: ${stats.avgDamage}`);
+                if (stats.tier) {
+                    console.log(`     - 티어: ${stats.tier} | KDA: ${stats.kda} | 승률: ${stats.winRatio}% | 평균 데미지: ${stats.avgDamage}`);
+                } else {
+                    console.log(`     - KDA: ${stats.kda} | 승률: ${stats.winRatio}% | 평균 데미지: ${stats.avgDamage}`);
+                }
                 successCount++;
             } else {
                 console.log(`  ⚠️  ${member.name} 업데이트 실패 (통계를 가져올 수 없음)`);

@@ -155,6 +155,7 @@ function selectAll() {
         // 온라인 멤버만 선택
         if (!member.status || member.status === 'online') {
             selectedMembers.add(member.id);
+        }
     });
     displayMembers();
 }
