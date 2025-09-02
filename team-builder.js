@@ -189,6 +189,14 @@ function generateTeams() {
         return;
     }
     
+    // 팀당 최대 4명 제한 검사
+    const maxPerTeam = 4;
+    const minTeamsNeeded = Math.ceil(selectedMembersList.length / maxPerTeam);
+    if (teamCount < minTeamsNeeded) {
+        showMessage(`선택된 멤버(${selectedMembersList.length}명)를 팀당 최대 ${maxPerTeam}명으로 나누려면 최소 ${minTeamsNeeded}개 팀이 필요합니다.`, 'error');
+        return;
+    }
+    
     // 1티어 필수 옵션 체크 (최소 1명이 있는지만 확인)
     const tier1Members = selectedMembersList.filter(m => m.tier === 'tier1');
     if (requireTier1 && tier1Members.length === 0) {
@@ -248,16 +256,28 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
             return kdB - kdA;
         });
         
-        // 균등 배치: 가장 적은 팀에 우선 배치
+        // 균등 배치: 가장 적은 팀에 우선 배치 (팀당 최대 4명)
         availableMembers.forEach(member => {
-            // 현재 가장 인원이 적은 팀 찾기
-            let minTeamIndex = 0;
-            let minTeamSize = teams[0].length;
+            // 현재 가장 인원이 적고 4명 미만인 팀 찾기
+            let minTeamIndex = -1;
+            let minTeamSize = 999;
             
-            for (let i = 1; i < teamCount; i++) {
-                if (teams[i].length < minTeamSize) {
+            for (let i = 0; i < teamCount; i++) {
+                if (teams[i].length < 4 && teams[i].length < minTeamSize) {
                     minTeamSize = teams[i].length;
                     minTeamIndex = i;
+                }
+            }
+            
+            // 모든 팀이 4명이면 가장 적은 팀에 배치 (예외 상황)
+            if (minTeamIndex === -1) {
+                minTeamIndex = 0;
+                minTeamSize = teams[0].length;
+                for (let i = 1; i < teamCount; i++) {
+                    if (teams[i].length < minTeamSize) {
+                        minTeamSize = teams[i].length;
+                        minTeamIndex = i;
+                    }
                 }
             }
             
@@ -267,16 +287,28 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
         // 랜덤 배치 - 균등하게 분배
         shuffleArray(availableMembers);
         
-        // 균등 배치: 가장 적은 팀에 우선 배치
+        // 균등 배치: 가장 적은 팀에 우선 배치 (팀당 최대 4명)
         availableMembers.forEach(member => {
-            // 현재 가장 인원이 적은 팀 찾기
-            let minTeamIndex = 0;
-            let minTeamSize = teams[0].length;
+            // 현재 가장 인원이 적고 4명 미만인 팀 찾기
+            let minTeamIndex = -1;
+            let minTeamSize = 999;
             
-            for (let i = 1; i < teamCount; i++) {
-                if (teams[i].length < minTeamSize) {
+            for (let i = 0; i < teamCount; i++) {
+                if (teams[i].length < 4 && teams[i].length < minTeamSize) {
                     minTeamSize = teams[i].length;
                     minTeamIndex = i;
+                }
+            }
+            
+            // 모든 팀이 4명이면 가장 적은 팀에 배치 (예외 상황)
+            if (minTeamIndex === -1) {
+                minTeamIndex = 0;
+                minTeamSize = teams[0].length;
+                for (let i = 1; i < teamCount; i++) {
+                    if (teams[i].length < minTeamSize) {
+                        minTeamSize = teams[i].length;
+                        minTeamIndex = i;
+                    }
                 }
             }
             
