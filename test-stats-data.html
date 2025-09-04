@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통계 데이터 확인</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #667eea;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success {
+            color: #4ade80;
+        }
+        .error {
+            color: #f87171;
+        }
+        .info {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>통계 데이터 확인 페이지</h1>
+    
+    <div class="section">
+        <h2>1. Firebase 연결 상태</h2>
+        <div id="firebaseStatus">확인 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>2. 멤버 데이터</h2>
+        <div id="membersData">로딩 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>3. 통계 히스토리</h2>
+        <div id="historyData">로딩 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>4. 메타데이터</h2>
+        <div id="metadataData">로딩 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>5. 현재 통계 (currentStats)</h2>
+        <div id="currentStatsData">로딩 중...</div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWEWmussrZcqv4LgCvjUdcuzRcaUST3Ls",
+            authDomain: "cs-homepage-5c3c2.firebaseapp.com",
+            databaseURL: "https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cs-homepage-5c3c2",
+            storageBucket: "cs-homepage-5c3c2.firebasestorage.app",
+            messagingSenderId: "117726976721",
+            appId: "1:117726976721:web:f9dd3297e82113414183f0",
+            measurementId: "G-9XZ9SJ3D78"
+        };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const database = getDatabase(app);
+            
+            document.getElementById('firebaseStatus').innerHTML = '<span class="success">✅ Firebase 연결 성공</span>';
+            
+            // 1. 멤버 데이터 확인
+            const membersRef = ref(database, 'members');
+            const membersSnapshot = await get(membersRef);
+            const members = membersSnapshot.val() || {};
+            
+            let membersHtml = `<p class="info">총 멤버 수: ${Object.keys(members).length}</p>`;
+            let membersWithStats = 0;
+            
+            Object.entries(members).forEach(([key, member]) => {
+                if (member.currentStats) {
+                    membersWithStats++;
+                    membersHtml += `<p class="success">✅ ${member.name}: currentStats 있음 (K/D: ${member.currentStats.kd || 'N/A'})</p>`;
+                } else {
+                    membersHtml += `<p class="error">❌ ${member.name}: currentStats 없음</p>`;
+                }
+            });
+            
+            membersHtml = `<p class="info">통계가 있는 멤버: ${membersWithStats}/${Object.keys(members).length}</p>` + membersHtml;
+            document.getElementById('membersData').innerHTML = membersHtml;
+            
+            // 2. 통계 히스토리 확인
+            try {
+                const historyRef = ref(database, 'stats/history');
+                const historySnapshot = await get(historyRef);
+                const history = historySnapshot.val() || {};
+                
+                let historyHtml = `<p class="info">히스토리가 있는 멤버: ${Object.keys(history).length}</p>`;
+                
+                Object.entries(history).forEach(([memberKey, dates]) => {
+                    const member = members[memberKey];
+                    const dateCount = Object.keys(dates).length;
+                    const latestDate = Object.keys(dates).sort().pop();
+                    historyHtml += `<p>${member ? member.name : memberKey}: ${dateCount}일 데이터 (최신: ${latestDate})</p>`;
+                });
+                
+                if (Object.keys(history).length === 0) {
+                    historyHtml = '<p class="error">❌ 히스토리 데이터 없음 (GitHub Actions가 아직 실행되지 않음)</p>';
+                }
+                
+                document.getElementById('historyData').innerHTML = historyHtml;
+            } catch (e) {
+                document.getElementById('historyData').innerHTML = '<p class="error">❌ 히스토리 데이터 없음</p>';
+            }
+            
+            // 3. 메타데이터 확인
+            try {
+                const metaRef = ref(database, 'stats/metadata/lastCollection');
+                const metaSnapshot = await get(metaRef);
+                const metadata = metaSnapshot.val();
+                
+                if (metadata) {
+                    let metaHtml = '<pre>' + JSON.stringify(metadata, null, 2) + '</pre>';
+                    if (metadata.success) {
+                        metaHtml = '<p class="success">✅ 마지막 수집 성공</p>' + metaHtml;
+                    } else {
+                        metaHtml = '<p class="error">❌ 마지막 수집 실패</p>' + metaHtml;
+                    }
+                    document.getElementById('metadataData').innerHTML = metaHtml;
+                } else {
+                    document.getElementById('metadataData').innerHTML = '<p class="error">❌ 메타데이터 없음</p>';
+                }
+            } catch (e) {
+                document.getElementById('metadataData').innerHTML = '<p class="error">❌ 메타데이터 없음</p>';
+            }
+            
+            // 4. 일별 스냅샷 확인
+            try {
+                const dailyRef = ref(database, 'stats/daily');
+                const dailySnapshot = await get(dailyRef);
+                const daily = dailySnapshot.val() || {};
+                
+                const dates = Object.keys(daily);
+                if (dates.length > 0) {
+                    let dailyHtml = `<p class="success">✅ 일별 스냅샷 날짜: ${dates.join(', ')}</p>`;
+                    document.getElementById('currentStatsData').innerHTML = dailyHtml;
+                } else {
+                    document.getElementById('currentStatsData').innerHTML = '<p class="error">❌ 일별 스냅샷 없음</p>';
+                }
+            } catch (e) {
+                document.getElementById('currentStatsData').innerHTML = '<p class="error">❌ 일별 스냅샷 확인 실패</p>';
+            }
+            
+        } catch (error) {
+            document.getElementById('firebaseStatus').innerHTML = 
+                `<span class="error">❌ Firebase 연결 실패: ${error.message}</span>`;
+            console.error('Firebase error:', error);
+        }
+    </script>
+</body>
+</html>
