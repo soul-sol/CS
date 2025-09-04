@@ -33,9 +33,26 @@ const headers = {
     'Accept': 'application/vnd.api+json'
 };
 
+// Rate limiting을 위한 변수
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 6000; // 6초 (분당 10개 요청)
+
+// Rate limit을 고려한 대기 함수
+async function waitForRateLimit() {
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+        const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+        console.log(`Rate limit: waiting ${Math.ceil(waitTime/1000)} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    lastRequestTime = Date.now();
+}
+
 // 플레이어 ID 가져오기
 async function getPlayerId(playerName) {
     try {
+        await waitForRateLimit(); // Rate limit 대기
         const response = await axios.get(
             `${API_BASE_URL}/players?filter[playerNames]=${encodeURIComponent(playerName)}`,
             { headers }
@@ -54,6 +71,7 @@ async function getPlayerId(playerName) {
 // 플레이어 통계 가져오기
 async function getPlayerStats(playerId) {
     try {
+        await waitForRateLimit(); // Rate limit 대기
         const response = await axios.get(
             `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
             { headers }
@@ -75,8 +93,9 @@ async function getPlayerStats(playerId) {
         return {
             kills: mainStats.kills || 0,
             deaths: mainStats.deaths || 0,
-            kd: mainStats.kills && mainStats.deaths ? 
-                (mainStats.kills / mainStats.deaths).toFixed(2) : '0.00',
+            kd: mainStats.deaths > 0 ? 
+                (mainStats.kills / mainStats.deaths).toFixed(2) : 
+                (mainStats.kills > 0 ? mainStats.kills.toFixed(2) : '0.00'),
             avgDamage: mainStats.damageDealt && mainStats.roundsPlayed ? 
                 Math.round(mainStats.damageDealt / mainStats.roundsPlayed) : 0,
             wins: mainStats.wins || 0,
@@ -121,7 +140,7 @@ async function collectDailyStats() {
             const playerName = memberData.name;
             console.log(`Processing ${playerName}...`);
             
-            // 플레이어 ID 가져오기
+            // 플레이어 ID 가져오기 (waitForRateLimit이 내부에 포함됨)
             const playerId = await getPlayerId(playerName);
             if (!playerId) {
                 console.error(`Could not find player ID for ${playerName}`);
@@ -129,7 +148,7 @@ async function collectDailyStats() {
                 continue;
             }
             
-            // 통계 가져오기
+            // 통계 가져오기 (waitForRateLimit이 내부에 포함됨)
             const stats = await getPlayerStats(playerId);
             if (!stats) {
                 console.error(`Could not fetch stats for ${playerName}`);
@@ -146,9 +165,6 @@ async function collectDailyStats() {
             };
             
             console.log(`✓ ${playerName}: KD ${stats.kd}, Avg Damage ${stats.avgDamage}`);
-            
-            // API 제한 방지를 위한 딜레이
-            await new Promise(resolve => setTimeout(resolve, 1000));
         }
         
         // Firebase에 저장
