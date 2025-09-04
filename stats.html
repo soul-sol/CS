@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CountShot Clan - 통계 분석</title>
+    <link rel="stylesheet" href="css/style-ultimate.css">
+    <link rel="stylesheet" href="css/stats.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <header class="main-header">
+            <div class="header-gif">
+                <img src="GIF.gif" alt="CountShot" class="header-logo-gif">
+            </div>
+            <div class="header-text">
+                <h1 class="page-title">CountShot Clan</h1>
+                <p class="subtitle">PUBG Statistics Dashboard</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-label">마지막 업데이트</span>
+                    <span class="stat-value" id="lastUpdate">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">분석 기간</span>
+                    <span class="stat-value" id="analysisPeriod">30일</span>
+                </div>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">티어 관리</a>
+                <a href="members.html" class="nav-link">멤버 관리</a>
+                <a href="team-builder.html" class="nav-link">팀 빌더</a>
+                <a href="stats.html" class="nav-link active">통계 분석</a>
+            </nav>
+        </header>
+
+        <!-- 멤버 선택 섹션 -->
+        <div class="stats-controls">
+            <div class="member-selector">
+                <label for="memberSelect">멤버 선택:</label>
+                <select id="memberSelect" class="member-select">
+                    <option value="">멤버를 선택하세요</option>
+                </select>
+            </div>
+            <div class="period-selector">
+                <label for="periodSelect">기간:</label>
+                <select id="periodSelect" class="period-select">
+                    <option value="7">최근 7일</option>
+                    <option value="14">최근 14일</option>
+                    <option value="30" selected>최근 30일</option>
+                </select>
+            </div>
+            <div class="chart-type-selector">
+                <button class="chart-type-btn active" data-type="kd">K/D 추이</button>
+                <button class="chart-type-btn" data-type="damage">평균 데미지</button>
+                <button class="chart-type-btn" data-type="kills">킬 수</button>
+                <button class="chart-type-btn" data-type="wins">승리</button>
+            </div>
+        </div>
+
+        <!-- 현재 통계 요약 -->
+        <div class="current-stats-summary" id="currentStats" style="display: none;">
+            <h3 class="summary-title">현재 통계</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">K/D</div>
+                    <div class="stat-value" id="currentKD">-</div>
+                    <div class="stat-change" id="kdChange"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">평균 데미지</div>
+                    <div class="stat-value" id="currentDamage">-</div>
+                    <div class="stat-change" id="damageChange"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">총 킬</div>
+                    <div class="stat-value" id="currentKills">-</div>
+                    <div class="stat-change" id="killsChange"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">승률</div>
+                    <div class="stat-value" id="currentWinRate">-</div>
+                    <div class="stat-change" id="winRateChange"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">게임 수</div>
+                    <div class="stat-value" id="currentGames">-</div>
+                    <div class="stat-change" id="gamesChange"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Top 10</div>
+                    <div class="stat-value" id="currentTop10">-</div>
+                    <div class="stat-change" id="top10Change"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 컨테이너 -->
+        <div class="chart-container" id="chartContainer" style="display: none;">
+            <canvas id="statsChart"></canvas>
+        </div>
+
+        <!-- 클랜 전체 통계 -->
+        <div class="clan-stats-section">
+            <h2 class="section-title">클랜 전체 통계</h2>
+            
+            <!-- TOP 5 랭킹 -->
+            <div class="rankings-grid">
+                <div class="ranking-card">
+                    <h3>🏆 K/D TOP 5</h3>
+                    <ol id="kdRanking" class="ranking-list">
+                        <li>데이터 로딩 중...</li>
+                    </ol>
+                </div>
+                <div class="ranking-card">
+                    <h3>💥 평균 데미지 TOP 5</h3>
+                    <ol id="damageRanking" class="ranking-list">
+                        <li>데이터 로딩 중...</li>
+                    </ol>
+                </div>
+                <div class="ranking-card">
+                    <h3>🎯 킬 수 TOP 5</h3>
+                    <ol id="killsRanking" class="ranking-list">
+                        <li>데이터 로딩 중...</li>
+                    </ol>
+                </div>
+                <div class="ranking-card">
+                    <h3>👑 승리 TOP 5</h3>
+                    <ol id="winsRanking" class="ranking-list">
+                        <li>데이터 로딩 중...</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 클랜 평균 차트 -->
+            <div class="clan-chart-container">
+                <h3>클랜 평균 성장 추이</h3>
+                <canvas id="clanAverageChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 로딩 표시 -->
+        <div id="loadingIndicator" class="loading-indicator hidden">
+            <div class="spinner"></div>
+            <p>데이터를 불러오는 중...</p>
+        </div>
+
+        <!-- 에러 메시지 -->
+        <div id="errorMessage" class="error-message hidden"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWEWmussrZcqv4LgCvjUdcuzRcaUST3Ls",
+            authDomain: "cs-homepage-5c3c2.firebaseapp.com",
+            databaseURL: "https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cs-homepage-5c3c2",
+            storageBucket: "cs-homepage-5c3c2.firebasestorage.app",
+            messagingSenderId: "117726976721",
+            appId: "1:117726976721:web:f9dd3297e82113414183f0",
+            measurementId: "G-9XZ9SJ3D78"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        window.firebaseDB = {
+            database: database,
+            ref: ref,
+            onValue: onValue,
+            get: get
+        };
+    </script>
+    <script src="js/stats.js"></script>
+</body>
+</html>

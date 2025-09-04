@@ -1,6 +1,15 @@
 # Dependencies
 node_modules/
 
+# Firebase Service Account (민감한 정보)
+scripts/firebase-service-account.json
+firebase-service-account.json
+*.serviceAccountKey.json
+
+# Environment variables
+.env
+.env.local
+
 # IDE
 .vscode/
 .idea/
@@ -13,14 +22,9 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Environment variables
-.env
-.env.local
+# Test coverage
+coverage/
 
-# Firebase Service Account (NEVER commit this!)
-firebase-service-account.json
-*-service-account.json
-
-# Build
+# Build outputs
 dist/
 build/

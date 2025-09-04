@@ -1,0 +1,15 @@
+{
+  "name": "cs-stats-collector",
+  "version": "1.0.0",
+  "description": "CountShot Clan PUBG Stats Collector",
+  "main": "collect-daily-stats.js",
+  "scripts": {
+    "collect": "node collect-daily-stats.js",
+    "test": "node test-collection.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.11.0",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1"
+  }
+}
