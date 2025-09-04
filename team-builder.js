@@ -65,8 +65,10 @@ function displayMembers() {
         unassigned: []
     };
     
-    // 디버깅: 전체 멤버 수와 상태 확인
+    // 디버깅: 온라인 멤버 수와 상태 확인
+    const onlineMembers = Object.values(members).filter(m => !m.status || m.status === 'online');
     console.log('Total members:', Object.keys(members).length);
+    console.log('Online members:', onlineMembers.length);
     console.log('Members status:', Object.values(members).map(m => ({
         name: m.name,
         status: m.status,
@@ -75,15 +77,12 @@ function displayMembers() {
     
     // 온라인 멤버만 티어별로 그룹화
     Object.values(members).forEach(member => {
-        // 오프라인 멤버는 제외
-        if (member.status && member.status !== 'online') {
-            console.log(`Filtered out offline member: ${member.name}, status: ${member.status}`);
-            return;
-        }
-        
-        const tier = member.tier || 'unassigned';
-        if (tierGroups[tier]) {
-            tierGroups[tier].push(member);
+        // 온라인 상태인 멤버만 포함 (status가 없거나 'online'인 경우)
+        if (!member.status || member.status === 'online') {
+            const tier = member.tier || 'unassigned';
+            if (tierGroups[tier]) {
+                tierGroups[tier].push(member);
+            }
         }
     });
     
@@ -116,8 +115,8 @@ function displayTierMembers(elementId, memberList, tier) {
     
     container.innerHTML = memberList.map(member => {
         const isChecked = selectedMembers.has(member.id);
-        // stats 구조 수정: stats.kd로 직접 접근
-        const kdRatio = member.stats ? (member.stats.kd || member.stats.squad?.kd || '0.00') : '0.00';
+        // stats 구조: Firebase에서 kda 사용
+        const kdRatio = member.stats ? (member.stats.kda || '0.0') : '0.0';
         
         return `
             <label class="member-checkbox">
@@ -128,7 +127,7 @@ function displayTierMembers(elementId, memberList, tier) {
                        onchange="toggleMember('${member.id}')">
                 <span class="member-info">
                     <span class="member-name">${member.name}</span>
-                    <span class="member-kd">K/D: ${kdRatio}</span>
+                    <span class="member-kd">KDA: ${kdRatio}</span>
                 </span>
             </label>
         `;
@@ -150,10 +149,13 @@ function updateSelectedCount() {
     selectedCountElement.textContent = selectedMembers.size;
 }
 
-// 전체 선택
+// 전체 선택 (온라인 멤버만)
 function selectAll() {
     Object.values(members).forEach(member => {
-        selectedMembers.add(member.id);
+        // 온라인 멤버만 선택
+        if (!member.status || member.status === 'online') {
+            selectedMembers.add(member.id);
+        }
     });
     displayMembers();
 }
@@ -187,10 +189,18 @@ function generateTeams() {
         return;
     }
     
-    // 1티어 필수 옵션 체크
+    // 팀당 최대 4명 제한 검사
+    const maxPerTeam = 4;
+    const minTeamsNeeded = Math.ceil(selectedMembersList.length / maxPerTeam);
+    if (teamCount < minTeamsNeeded) {
+        showMessage(`선택된 멤버(${selectedMembersList.length}명)를 팀당 최대 ${maxPerTeam}명으로 나누려면 최소 ${minTeamsNeeded}개 팀이 필요합니다.`, 'error');
+        return;
+    }
+    
+    // 1티어 필수 옵션 체크 (최소 1명이 있는지만 확인)
     const tier1Members = selectedMembersList.filter(m => m.tier === 'tier1');
-    if (requireTier1 && tier1Members.length < teamCount) {
-        showMessage(`1티어 멤버(${tier1Members.length}명)가 팀 개수(${teamCount})보다 적어 각 팀에 배치할 수 없습니다.`, 'error');
+    if (requireTier1 && tier1Members.length === 0) {
+        showMessage(`1티어 멤버가 없습니다. 최소 1명 이상 필요합니다.`, 'error');
         return;
     }
     
@@ -210,19 +220,27 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
     const teams = Array.from({ length: teamCount }, () => []);
     let availableMembers = [...membersList];
     
-    // 1티어 먼저 배치
+    // 1티어 먼저 배치 (가능한 팀에만)
     if (requireTier1) {
         const tier1Members = availableMembers.filter(m => m.tier === 'tier1');
         const otherMembers = availableMembers.filter(m => m.tier !== 'tier1');
         
-        // 1티어를 각 팀에 하나씩 배치
+        // 1티어를 각 팀에 하나씩 배치 (있는 만큼만)
         tier1Members.forEach((member, index) => {
             if (index < teamCount) {
+                // 팀 수보다 적으면 있는 만큼만 배치
                 teams[index].push(member);
             } else {
-                // 남은 1티어는 랜덤 배치
-                const randomTeam = Math.floor(Math.random() * teamCount);
-                teams[randomTeam].push(member);
+                // 남은 1티어는 가장 적은 팀에 배치
+                let minTeamIndex = 0;
+                let minTeamSize = teams[0].length;
+                for (let i = 1; i < teamCount; i++) {
+                    if (teams[i].length < minTeamSize) {
+                        minTeamSize = teams[i].length;
+                        minTeamIndex = i;
+                    }
+                }
+                teams[minTeamIndex].push(member);
             }
         });
         
@@ -231,32 +249,70 @@ function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
     
     // 나머지 멤버 배치
     if (balanceByStats) {
-        // K/D 기준으로 정렬
+        // KDA 기준으로 정렬 (Firebase stats 구조 사용)
         availableMembers.sort((a, b) => {
-            const kdA = a.stats ? parseFloat(a.stats.squad.kd) : 0;
-            const kdB = b.stats ? parseFloat(b.stats.squad.kd) : 0;
+            const kdA = a.stats ? parseFloat(a.stats.kda || 0) : 0;
+            const kdB = b.stats ? parseFloat(b.stats.kda || 0) : 0;
             return kdB - kdA;
         });
         
-        // 스네이크 드래프트 방식으로 배치 (공평한 분배)
-        let teamIndex = 0;
-        let direction = 1;
-        
+        // 균등 배치: 가장 적은 팀에 우선 배치 (팀당 최대 4명)
         availableMembers.forEach(member => {
-            teams[teamIndex].push(member);
+            // 현재 가장 인원이 적고 4명 미만인 팀 찾기
+            let minTeamIndex = -1;
+            let minTeamSize = 999;
             
-            teamIndex += direction;
-            if (teamIndex >= teamCount || teamIndex < 0) {
-                direction *= -1;
-                teamIndex += direction;
+            for (let i = 0; i < teamCount; i++) {
+                if (teams[i].length < 4 && teams[i].length < minTeamSize) {
+                    minTeamSize = teams[i].length;
+                    minTeamIndex = i;
+                }
             }
+            
+            // 모든 팀이 4명이면 가장 적은 팀에 배치 (예외 상황)
+            if (minTeamIndex === -1) {
+                minTeamIndex = 0;
+                minTeamSize = teams[0].length;
+                for (let i = 1; i < teamCount; i++) {
+                    if (teams[i].length < minTeamSize) {
+                        minTeamSize = teams[i].length;
+                        minTeamIndex = i;
+                    }
+                }
+            }
+            
+            teams[minTeamIndex].push(member);
         });
     } else {
-        // 랜덤 배치
+        // 랜덤 배치 - 균등하게 분배
         shuffleArray(availableMembers);
         
-        availableMembers.forEach((member, index) => {
-            teams[index % teamCount].push(member);
+        // 균등 배치: 가장 적은 팀에 우선 배치 (팀당 최대 4명)
+        availableMembers.forEach(member => {
+            // 현재 가장 인원이 적고 4명 미만인 팀 찾기
+            let minTeamIndex = -1;
+            let minTeamSize = 999;
+            
+            for (let i = 0; i < teamCount; i++) {
+                if (teams[i].length < 4 && teams[i].length < minTeamSize) {
+                    minTeamSize = teams[i].length;
+                    minTeamIndex = i;
+                }
+            }
+            
+            // 모든 팀이 4명이면 가장 적은 팀에 배치 (예외 상황)
+            if (minTeamIndex === -1) {
+                minTeamIndex = 0;
+                minTeamSize = teams[0].length;
+                for (let i = 1; i < teamCount; i++) {
+                    if (teams[i].length < minTeamSize) {
+                        minTeamSize = teams[i].length;
+                        minTeamIndex = i;
+                    }
+                }
+            }
+            
+            teams[minTeamIndex].push(member);
         });
     }
     
@@ -285,7 +341,7 @@ function displayTeams(teams) {
                     <span class="team-size">${team.length}명</span>
                 </div>
                 <div class="team-stats">
-                    <span>평균 K/D: ${teamKD}</span>
+                    <span>평균 KDA: ${teamKD}</span>
                     <span>${tierComposition}</span>
                 </div>
                 <div class="team-members">
@@ -301,7 +357,6 @@ function displayTeams(teams) {
     }).join('');
     
     teamsDisplay.innerHTML = `
-        <h2>팀 구성 결과</h2>
         <div class="teams-grid">
             ${teamsHtml}
         </div>
@@ -310,10 +365,10 @@ function displayTeams(teams) {
     resultActions.classList.remove('hidden');
 }
 
-// 팀 평균 K/D 계산
+// 팀 평균 KDA 계산
 function calculateTeamKD(team) {
     const totalKD = team.reduce((sum, member) => {
-        const kd = member.stats ? parseFloat(member.stats.kd || member.stats.squad?.kd || 0) : 0;
+        const kd = member.stats ? parseFloat(member.stats.kda || 0) : 0;
         return sum + kd;
     }, 0);
     
@@ -418,6 +473,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Firebase 초기화
     await initializeFirebase();
     
+    // 팀 개수 변경 함수
+    function changeTeamCount(change) {
+        const currentValue = parseInt(teamCountInput.value);
+        const newValue = currentValue + change;
+        
+        if (newValue >= 2 && newValue <= 10) {
+            teamCountInput.value = newValue;
+        }
+    }
+
+    // 전역에서 접근 가능하도록 설정
+    window.changeTeamCount = changeTeamCount;
+
     // 이벤트 리스너 등록
     selectAllBtn.addEventListener('click', selectAll);
     deselectAllBtn.addEventListener('click', deselectAll);

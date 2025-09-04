@@ -48,7 +48,7 @@ async function initializeFirebase() {
     await waitForFirebase();
     console.log('Firebase initialized, setting up listener');
     
-    // Firebase 실시간 리스너
+    // Firebase 실시간 리스너 - 멤버 목록
     onValue(ref(database, 'members'), (snapshot) => {
         console.log('Firebase data received:', snapshot.val());
         members = snapshot.val() || {};
@@ -56,6 +56,14 @@ async function initializeFirebase() {
     }, (error) => {
         console.error('Firebase read error:', error);
         showError('데이터베이스 연결 오류: ' + error.message);
+    });
+    
+    // 마지막 업데이트 시간 리스너
+    onValue(ref(database, 'lastUpdate'), (snapshot) => {
+        const lastUpdate = snapshot.val();
+        if (lastUpdate && lastUpdate.timestamp) {
+            displayLastUpdateTime(lastUpdate);
+        }
     });
 }
 
@@ -382,6 +390,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+
+// 마지막 업데이트 시간 표시
+function displayLastUpdateTime(updateInfo) {
+    const updateElement = document.getElementById('lastUpdateInfo');
+    if (!updateElement) {
+        // 업데이트 정보를 표시할 요소가 없으면 생성
+        const header = document.querySelector('.header') || document.querySelector('h1');
+        if (header) {
+            const infoDiv = document.createElement('div');
+            infoDiv.id = 'lastUpdateInfo';
+            infoDiv.style.cssText = 'text-align: center; font-size: 12px; color: #888; margin: 10px 0;';
+            header.parentElement.insertBefore(infoDiv, header.nextSibling);
+        }
+    }
+    
+    if (updateInfo && updateInfo.timestamp) {
+        const updateTime = new Date(updateInfo.timestamp);
+        const koreanTime = updateTime.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        const infoText = `📊 마지막 스탯 업데이트: ${koreanTime} (성공: ${updateInfo.successCount || 0}명 / 전체: ${updateInfo.totalMembers || 0}명)`;
+        
+        const element = document.getElementById('lastUpdateInfo');
+        if (element) {
+            element.textContent = infoText;
+        }
+    }
+}
+
+// 수동 업데이트 버튼 추가 (관리자용)
+function addManualUpdateButton() {
+    const headerElement = document.querySelector('.header-actions') || document.querySelector('.controls');
+    if (headerElement) {
+        const updateBtn = document.createElement('button');
+        updateBtn.id = 'manualUpdateBtn';
+        updateBtn.className = 'btn btn-secondary';
+        updateBtn.innerHTML = '🔄 스탯 업데이트';
+        updateBtn.title = '모든 멤버의 PUBG 스탯을 즉시 업데이트합니다';
+        updateBtn.onclick = async () => {
+            if (confirm('모든 멤버의 스탯을 업데이트하시겠습니까? 시간이 걸릴 수 있습니다.')) {
+                alert('업데이트 기능은 서버 스크립트를 통해 실행됩니다.\n터미널에서 "npm run update-stats"를 실행하세요.');
+            }
+        };
+        headerElement.appendChild(updateBtn);
+    }
+}
 
 // 전역 함수로 등록
 window.selectMember = selectMember;

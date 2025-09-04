@@ -17,14 +17,27 @@
             </div>
             <div class="header-text">
                 <h1 class="page-title">CountShot Members</h1>
-                <p class="subtitle">멤버 온라인 상태 관리</p>
+                <p class="subtitle">멤버 관리 시스템</p>
             </div>
             <nav class="header-nav">
                 <a href="index.html" class="nav-link">티어 관리</a>
-                <a href="members.html" class="nav-link active">멤버 상태</a>
+                <a href="members.html" class="nav-link active">멤버 관리</a>
                 <a href="team-builder.html" class="nav-link">팀 빌더</a>
             </nav>
         </header>
+
+        <!-- 멤버 추가 섹션 -->
+        <div class="add-member-section">
+            <h2 class="section-title">새 멤버 추가</h2>
+            <div class="add-member-form">
+                <input type="text" id="playerNameInput" placeholder="PUBG 닉네임 입력" class="input-field">
+                <button id="addMemberBtn" class="btn-add-member">
+                    <span class="btn-icon">+</span>
+                    멤버 추가
+                </button>
+            </div>
+            <div id="addMemberMessage" class="message hidden"></div>
+        </div>
 
         <!-- 온라인 상태 요약 -->
         <div class="online-summary">
@@ -44,11 +57,25 @@
             </div>
         </div>
 
-        <!-- 멤버 목록 -->
-        <div class="members-container">
-            <h2 class="members-title">전체 멤버</h2>
-            <div class="members-list" id="allMembers">
-                <!-- 모든 멤버들이 여기에 표시됩니다 -->
+        <!-- 온라인 멤버 -->
+        <div class="members-section">
+            <h2 class="section-title">
+                <span class="status-icon">🟢</span>
+                온라인 멤버
+            </h2>
+            <div class="members-grid" id="onlineMembers">
+                <!-- 온라인 멤버들이 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- 오프라인 멤버 -->
+        <div class="members-section">
+            <h2 class="section-title">
+                <span class="status-icon">⚫</span>
+                오프라인 멤버
+            </h2>
+            <div class="members-grid" id="offlineMembers">
+                <!-- 오프라인 멤버들이 여기에 표시됩니다 -->
             </div>
         </div>
 

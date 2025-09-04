@@ -339,42 +339,51 @@ function updateTierDisplay() {
     updateTierContent(tier4Element, tierGroups.tier4, 'tier4');
     updateTierContent(unassignedElement, tierGroups.unassigned, 'unassigned');
     
-    // 카운트 업데이트
-    tier1CountElement.textContent = tierGroups.tier1.length;
-    tier2CountElement.textContent = tierGroups.tier2.length;
-    tier3CountElement.textContent = tierGroups.tier3.length;
-    tier4CountElement.textContent = tierGroups.tier4.length;
-    unassignedCountElement.textContent = tierGroups.unassigned.length;
+    // 온라인 멤버 카운트 업데이트
+    const onlineTier1 = tierGroups.tier1.filter(m => !m.status || m.status === 'online').length;
+    const onlineTier2 = tierGroups.tier2.filter(m => !m.status || m.status === 'online').length;
+    const onlineTier3 = tierGroups.tier3.filter(m => !m.status || m.status === 'online').length;
+    const onlineTier4 = tierGroups.tier4.filter(m => !m.status || m.status === 'online').length;
+    const onlineUnassigned = tierGroups.unassigned.filter(m => !m.status || m.status === 'online').length;
     
-    // 총 멤버 수 업데이트
+    tier1CountElement.textContent = onlineTier1;
+    tier2CountElement.textContent = onlineTier2;
+    tier3CountElement.textContent = onlineTier3;
+    tier4CountElement.textContent = onlineTier4;
+    unassignedCountElement.textContent = onlineUnassigned;
+    
+    // 온라인/전체 멤버 수 업데이트
+    const onlineMembers = Object.values(members).filter(m => !m.status || m.status === 'online').length;
     const totalMembers = Object.keys(members).length;
-    totalMembersElement.textContent = totalMembers;
+    totalMembersElement.textContent = `${onlineMembers} / ${totalMembers}`;
 }
 
-// 티어 콘텐츠 업데이트
+// 티어 콘텐츠 업데이트 (온라인 멤버만 표시)
 function updateTierContent(element, memberList, tier) {
-    if (memberList.length === 0) {
+    // 온라인 멤버만 필터링
+    const onlineMembers = memberList.filter(member => !member.status || member.status === 'online');
+    
+    if (onlineMembers.length === 0) {
         element.innerHTML = `
             <div class="tier-drop-zone">
-                <p class="drop-hint">멤버를 여기로 드래그하세요</p>
+                <p class="drop-hint">온라인 멤버가 없습니다</p>
             </div>
         `;
         return;
     }
     
     const tierClass = getTierClass(tier);
-    element.innerHTML = memberList.map(member => `
+    element.innerHTML = onlineMembers.map(member => `
         <div class="member-card ${tierClass}" draggable="true" data-member-id="${member.id}">
             <div class="member-card-header">
                 <h3 class="member-name">${member.name}</h3>
-                <button class="member-remove" onclick="removeMember('${member.id}')">×</button>
             </div>
             <div class="member-card-stats">
                 ${member.stats ? `
                     <div class="stats-grid-compact">
                         <div class="stat-item-compact">
-                            <span class="stat-label">${member.stats.isRanked ? '🏆 K/D' : 'K/D'}</span>
-                            <span class="stat-value">${member.stats.kd || '0.00'}</span>
+                            <span class="stat-label">KDA</span>
+                            <span class="stat-value">${member.stats.kda || '0.0'}</span>
                         </div>
                         <div class="stat-item-compact">
                             <span class="stat-label">DMG</span>
@@ -384,8 +393,8 @@ function updateTierContent(element, memberList, tier) {
                 ` : `
                     <div class="stats-grid-compact">
                         <div class="stat-item-compact">
-                            <span class="stat-label">K/D</span>
-                            <span class="stat-value">0.00</span>
+                            <span class="stat-label">KDA</span>
+                            <span class="stat-value">0.0</span>
                         </div>
                         <div class="stat-item-compact">
                             <span class="stat-label">DMG</span>
@@ -394,7 +403,82 @@ function updateTierContent(element, memberList, tier) {
                     </div>
                 `}
             </div>
-            <button class="member-details-btn" onclick="showMemberDetails('${member.id}')">상세</button>
+            ${member.stats?.tier ? (() => {
+                // 티어 텍스트 포맷팅 (첫 글자만 대문자)
+                const tierParts = member.stats.tier.replace(/[-]/g, ' ').split(' ');
+                const tierText = tierParts.map((part, index) => {
+                    if (index === 0) {
+                        // 티어 이름 (Bronze, Silver, Gold, etc.)
+                        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                    }
+                    return part; // 숫자는 그대로
+                }).join(' ');
+                const tierName = member.stats.tier.split(/[-\s]/)[0].toLowerCase();
+                const tierColors = {
+                    'bronze': { 
+                        bg: 'linear-gradient(135deg, #8B4513, #CD7F32)', 
+                        color: '#FFF',
+                        shadow: '0 4px 15px rgba(139, 69, 19, 0.3)',
+                        glow: 'none'
+                    },
+                    'silver': { 
+                        bg: 'linear-gradient(135deg, #A0A0A0, #C0C0C0)', 
+                        color: '#FFF',
+                        shadow: '0 4px 15px rgba(192, 192, 192, 0.4)',
+                        glow: 'none'
+                    },
+                    'gold': { 
+                        bg: 'linear-gradient(135deg, #FFB700, #FFD700)', 
+                        color: '#000',
+                        shadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
+                        glow: '0 0 10px rgba(255, 215, 0, 0.3)'
+                    },
+                    'platinum': { 
+                        bg: 'linear-gradient(135deg, #00D4B5, #2ED5C5)', 
+                        color: '#FFF',
+                        shadow: '0 4px 20px rgba(46, 213, 197, 0.5)',
+                        glow: '0 0 15px rgba(46, 213, 197, 0.4)'
+                    },
+                    'diamond': { 
+                        bg: 'linear-gradient(135deg, #4A69FF, #688FFF)', 
+                        color: '#FFF',
+                        shadow: '0 4px 25px rgba(104, 143, 255, 0.6)',
+                        glow: '0 0 20px rgba(104, 143, 255, 0.5)'
+                    },
+                    'master': { 
+                        bg: 'linear-gradient(135deg, #FF2E63, #FF4757)', 
+                        color: '#FFF',
+                        shadow: '0 4px 30px rgba(255, 71, 87, 0.7)',
+                        glow: '0 0 25px rgba(255, 71, 87, 0.6)',
+                        animation: 'pulse 2s infinite'
+                    }
+                };
+                const style = tierColors[tierName] || tierColors['bronze'];
+                return `<div class="member-tier-badge" style="
+                    background: ${style.bg}; 
+                    color: ${style.color}; 
+                    padding: 10px; 
+                    text-align: center; 
+                    font-weight: 800; 
+                    font-size: 1rem; 
+                    letter-spacing: 2px; 
+                    border-radius: 0 0 12px 12px; 
+                    margin-top: 15px;
+                    box-shadow: ${style.shadow};
+                    text-shadow: ${style.glow};
+                    font-family: 'Orbitron', sans-serif;
+                    ${tierName === 'master' ? 'animation: glow 2s ease-in-out infinite;' : ''}
+                ">${tierText}</div>`;
+            })() : `<div class="member-tier-badge" style="
+                background: linear-gradient(135deg, rgba(50, 50, 50, 0.5), rgba(70, 70, 70, 0.5)); 
+                color: #999; 
+                padding: 10px; 
+                text-align: center; 
+                font-size: 0.9rem; 
+                border-radius: 0 0 12px 12px; 
+                margin-top: 15px;
+                font-family: 'Rajdhani', sans-serif;
+            ">UNRANKED</div>`}
         </div>
     `).join('');
     
@@ -586,18 +670,8 @@ function closeMemberModal() {
     document.getElementById('memberModal').classList.add('hidden');
 }
 
-// 멤버 제거
-async function removeMember(memberId) {
-    if (confirm('이 멤버를 삭제하시겠습니까?')) {
-        try {
-            await remove(ref(database, 'members/' + memberId));
-            console.log(`Member ${memberId} removed`);
-        } catch (error) {
-            console.error('Error removing member:', error);
-            showError('멤버 삭제 중 오류가 발생했습니다.');
-        }
-    }
-}
+// 멤버 제거 - 멤버 관리 페이지로 이동됨
+// removeMember 함수는 멤버 관리 페이지에서 처리
 
 // 로딩 표시
 function showLoading() {
@@ -690,5 +764,5 @@ async function updateMemberStats(memberId) {
 
 window.showMemberDetails = showMemberDetails;
 window.updateMemberStats = updateMemberStats;
-window.removeMember = removeMember;
+// window.removeMember = removeMember; // 멤버 관리 페이지로 이동
 window.closeMemberModal = closeMemberModal;
