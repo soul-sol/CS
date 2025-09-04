@@ -5,7 +5,9 @@ console.log('Members page loaded!');
 let members = {};
 
 // PUBG API 설정
-const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJkMWM5MjdkMC04MmRiLTAxM2QtN2I0Mi0zM2I1ZTBkNzc0MWYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzM0MDUxNTM0LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6ImN5bGltLTEifQ.oo5a9kA2jD2_1bnQRZBs_BSN7JhWL2Ui9kdksJcT9Bo';
+// API 키가 만료되었습니다. 새 키가 필요합니다.
+// https://developer.pubg.com/ 에서 발급받으세요
+const API_KEY = 'YOUR_NEW_API_KEY_HERE';
 const API_BASE_URL = 'https://api.pubg.com/shards/kakao';
 
 // DOM이 로드된 후 초기화
