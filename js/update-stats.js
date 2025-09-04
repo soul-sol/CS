@@ -18,7 +18,7 @@ const admin = require('firebase-admin');
 // 프로젝트 설정 > 서비스 계정 > 새 비공개 키 생성
 const serviceAccount = require('./firebase-service-account.json');
 
-// Firebase 초기화
+// Firebase 초기화 - cs-homepage-5c3c2 프로젝트 사용
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: 'https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app'
@@ -72,10 +72,50 @@ async function getCurrentSeasonId() {
     }
 }
 
+// 플레이어 검색
+async function searchPlayer(playerName) {
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/players?filter[playerNames]=${playerName}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Accept': 'application/vnd.api+json'
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            return null;
+        }
+        
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+            return data.data[0].id;
+        }
+        return null;
+    } catch (error) {
+        console.error(`플레이어 검색 실패 (${playerName}):`, error.message);
+        return null;
+    }
+}
+
 // 플레이어 통계 가져오기
 async function fetchPlayerStats(playerId, playerName) {
     try {
         console.log(`  📊 ${playerName}의 통계 가져오는 중...`);
+        
+        // playerId가 없거나 잘못된 경우 플레이어 이름으로 검색
+        let actualPlayerId = playerId;
+        if (!playerId || !playerId.startsWith('account.')) {
+            console.log(`  🔍 ${playerName} 플레이어 ID 검색 중...`);
+            actualPlayerId = await searchPlayer(playerName);
+            if (!actualPlayerId) {
+                console.log(`  ❌ ${playerName}을(를) 찾을 수 없습니다`);
+                return null;
+            }
+            console.log(`  ✅ 플레이어 ID 찾음: ${actualPlayerId}`);
+        }
         
         // 현재 시즌 ID 가져오기
         const seasonId = await getCurrentSeasonId();
@@ -86,7 +126,7 @@ async function fetchPlayerStats(playerId, playerName) {
         
         // Ranked 통계 먼저 시도
         const rankedResponse = await fetch(
-            `${API_BASE_URL}/players/${playerId}/seasons/${seasonId}/ranked`,
+            `${API_BASE_URL}/players/${actualPlayerId}/seasons/${seasonId}/ranked`,
             {
                 headers: {
                     'Authorization': `Bearer ${API_KEY}`,
@@ -100,23 +140,30 @@ async function fetchPlayerStats(playerId, playerName) {
             const rankedData = await rankedResponse.json();
             const squadRanked = rankedData.data.attributes.rankedGameModeStats?.squad || {};
             
-            // 티어 정보 (하이픈 제거, 첫 글자만 대문자)
-            let tier = null;
-            if (squadRanked.currentTier) {
-                const tierName = squadRanked.currentTier.tier.charAt(0).toUpperCase() + squadRanked.currentTier.tier.slice(1).toLowerCase();
-                tier = `${tierName} ${squadRanked.currentTier.subTier}`;
+            // Squad 랭크 게임을 한 경우에만 처리
+            if (squadRanked.roundsPlayed && squadRanked.roundsPlayed > 0) {
+                // 티어 정보
+                let tier = null;
+                if (squadRanked.currentTier) {
+                    const tierName = squadRanked.currentTier.tier.charAt(0).toUpperCase() + squadRanked.currentTier.tier.slice(1).toLowerCase();
+                    tier = `${tierName} ${squadRanked.currentTier.subTier}`;
+                }
+                
+                // 평균 데미지 계산
+                const avgDamage = Math.round(squadRanked.damageDealt / squadRanked.roundsPlayed);
+                
+                return {
+                    // Squad 통계만 저장
+                    tier: tier,
+                    kda: squadRanked.kda ? squadRanked.kda.toFixed(2) : '0.0',
+                    avgDamage: avgDamage,
+                    roundsPlayed: squadRanked.roundsPlayed,
+                    wins: squadRanked.wins || 0,
+                    kills: squadRanked.kills || 0,
+                    assists: squadRanked.assists || 0,
+                    damageDealt: Math.round(squadRanked.damageDealt || 0)
+                };
             }
-            
-            // 평균 데미지 계산
-            const avgDamage = squadRanked.roundsPlayed > 0 ? 
-                Math.round(squadRanked.damageDealt / squadRanked.roundsPlayed) : 0;
-            
-            return {
-                // 필수 통계만 저장
-                tier: tier,
-                kda: squadRanked.kda ? squadRanked.kda.toFixed(1) : '0.0',
-                avgDamage: avgDamage  // 평균 데미지
-            };
         }
         
         // Ranked 통계가 없으면 0으로 설정
@@ -167,19 +214,27 @@ async function updateAllMembers() {
             await new Promise(resolve => setTimeout(resolve, 20000));
             
             // 플레이어 통계 가져오기 (originalId 사용)
-            const playerId = member.originalId || memberId;
-            const stats = await fetchPlayerStats(playerId, member.name);
+            const playerId = member.originalId || member.pubgId || memberId;
+            const statsResult = await fetchPlayerStats(playerId, member.name);
             
-            if (stats) {
+            if (statsResult) {
                 // 업데이트할 데이터 준비
-                updates[`members/${memberId}/stats`] = stats;
+                updates[`members/${memberId}/stats`] = statsResult;
                 updates[`members/${memberId}/lastStatsUpdate`] = new Date().toISOString();
                 
+                // 플레이어 ID가 검색을 통해 찾아진 경우 originalId 업데이트
+                if (!member.originalId && playerId !== memberId) {
+                    const foundId = await searchPlayer(member.name);
+                    if (foundId) {
+                        updates[`members/${memberId}/originalId`] = foundId;
+                    }
+                }
+                
                 console.log(`  ✅ ${member.name} 업데이트 성공`);
-                if (stats.tier) {
-                    console.log(`     - 티어: ${stats.tier} | KDA: ${stats.kda} | 평균 데미지: ${stats.avgDamage}`);
+                if (statsResult.tier) {
+                    console.log(`     - 티어: ${statsResult.tier} | KDA: ${statsResult.kda} | 평균 데미지: ${statsResult.avgDamage}`);
                 } else {
-                    console.log(`     - KDA: ${stats.kda} | 평균 데미지: ${stats.avgDamage}`);
+                    console.log(`     - KDA: ${statsResult.kda} | 평균 데미지: ${statsResult.avgDamage}`);
                 }
                 successCount++;
             } else {

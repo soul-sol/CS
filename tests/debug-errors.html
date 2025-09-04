@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>에러 디버그</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            padding: 20px; 
+            background: #1a1a1a; 
+            color: #fff;
+        }
+        iframe {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #333;
+            margin: 10px 0;
+        }
+        .error-log {
+            background: #2a1a1a;
+            border: 1px solid #f44336;
+            padding: 10px;
+            margin: 5px 0;
+            color: #ff9999;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>🔍 페이지 에러 디버그</h1>
+    
+    <button onclick="checkPage('index.html')">index.html 확인</button>
+    <button onclick="checkPage('members.html')">members.html 확인</button>
+    <button onclick="checkPage('team-builder.html')">team-builder.html 확인</button>
+    
+    <div id="errors"></div>
+    
+    <script>
+        // 전역 에러 캐처
+        window.addEventListener('error', (e) => {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-log';
+            errorDiv.innerHTML = `
+                <strong>에러 발생!</strong><br>
+                메시지: ${e.message}<br>
+                파일: ${e.filename}<br>
+                라인: ${e.lineno}:${e.colno}<br>
+                스택: <pre>${e.error?.stack || 'N/A'}</pre>
+            `;
+            document.getElementById('errors').appendChild(errorDiv);
+        });
+        
+        function checkPage(page) {
+            const errorsDiv = document.getElementById('errors');
+            errorsDiv.innerHTML = `<h2>${page} 체크 중...</h2>`;
+            
+            // 페이지를 iframe으로 로드
+            const iframe = document.createElement('iframe');
+            iframe.src = '../' + page;
+            iframe.onload = () => {
+                try {
+                    // iframe 내부의 window 객체 확인
+                    const iframeWindow = iframe.contentWindow;
+                    
+                    errorsDiv.innerHTML += `
+                        <div style="background: #1a2a1a; padding: 10px; margin: 10px 0;">
+                            <h3>${page} 전역 객체 확인</h3>
+                            <div>firebaseDB: ${typeof iframeWindow.firebaseDB}</div>
+                            <div>showMemberDetails: ${typeof iframeWindow.showMemberDetails}</div>
+                            <div>updateMemberStats: ${typeof iframeWindow.updateMemberStats}</div>
+                            <div>members 변수: ${typeof iframeWindow.members}</div>
+                            <div>database 변수: ${typeof iframeWindow.database}</div>
+                        </div>
+                    `;
+                    
+                    // 콘솔 에러 체크
+                    if (iframeWindow.console && iframeWindow.console.error) {
+                        const originalError = iframeWindow.console.error;
+                        iframeWindow.console.error = function(...args) {
+                            errorsDiv.innerHTML += `
+                                <div class="error-log">
+                                    콘솔 에러: ${args.join(' ')}
+                                </div>
+                            `;
+                            originalError.apply(iframeWindow.console, args);
+                        };
+                    }
+                } catch (e) {
+                    errorsDiv.innerHTML += `<div class="error-log">iframe 접근 오류: ${e.message}</div>`;
+                }
+            };
+            
+            errorsDiv.appendChild(iframe);
+        }
+    </script>
+</body>
+</html>

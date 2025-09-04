@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CountShot Clan - PUBG</title>
-    <link rel="stylesheet" href="style-ultimate.css">
+    <link rel="stylesheet" href="css/style-ultimate.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -35,7 +35,16 @@
             </nav>
         </header>
 
-
+        <!-- 티어 이동 컨트롤 섹션 -->
+        <div class="tier-control-section">
+            <button id="lockBtn" class="lock-btn locked" title="클릭하여 티어 이동 잠금 해제">
+                <span class="lock-icon">🔒</span>
+                <span class="lock-text">티어 이동 잠김</span>
+            </button>
+            <div class="lock-info">
+                <span class="lock-status">티어 이동이 잠겨있습니다. 멤버를 이동하려면 잠금을 해제하세요.</span>
+            </div>
+        </div>
 
         <!-- 티어 컨테이너 (5개 컬럼으로 변경) -->
         <div class="tiers-container tiers-5col">
@@ -103,12 +112,12 @@
                 </div>
             </div>
 
-            <!-- 무소속 -->
+            <!-- 미분류 -->
             <div class="tier-column" data-tier="unassigned">
                 <div class="tier-header tier-gray">
                     <h2 class="tier-title">
                         <span class="tier-icon">📋</span>
-                        무소속
+                        미분류
                     </h2>
                     <span class="tier-count" id="unassignedCount"></span>
                 </div>
@@ -128,12 +137,6 @@
                     <!-- 멤버 상세 정보가 여기에 표시됩니다 -->
                 </div>
             </div>
-        </div>
-
-        <!-- 로딩 인디케이터 -->
-        <div id="loadingIndicator" class="loading hidden">
-            <div class="spinner"></div>
-            <p>데이터를 불러오는 중...</p>
         </div>
 
         <!-- 에러 메시지 -->
@@ -172,6 +175,6 @@
             update: update
         };
     </script>
-    <script src="app-tier.js?v=3"></script>
+    <script src="js/app-tier.js?v=2"></script>
 </body>
 </html>

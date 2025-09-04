@@ -7,9 +7,12 @@ Firebase에 저장된 클랜원들의 PUBG 스탯을 하루에 한 번 자동으
 
 ### 1. Firebase Admin SDK 설정
 
+⚠️ **중요**: 현재 Firebase 프로젝트는 **cs-homepage-5c3c2**를 사용합니다.
+- Database URL: https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app
+
 #### Step 1: Firebase 서비스 계정 키 생성
 1. [Firebase Console](https://console.firebase.google.com)에 접속
-2. 프로젝트 선택 (cs-homepage)
+2. 프로젝트 선택 (**cs-homepage-5c3c2**)
 3. ⚙️ 프로젝트 설정 클릭
 4. "서비스 계정" 탭 선택
 5. "새 비공개 키 생성" 버튼 클릭

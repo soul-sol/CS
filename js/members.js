@@ -2,66 +2,59 @@
 console.log('Members page loaded!');
 
 // Firebase 초기화 대기
-let database, ref, set, onValue, update, remove;
 let members = {};
 
 // PUBG API 설정
 const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJkMWM5MjdkMC04MmRiLTAxM2QtN2I0Mi0zM2I1ZTBkNzc0MWYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzM0MDUxNTM0LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6ImN5bGltLTEifQ.oo5a9kA2jD2_1bnQRZBs_BSN7JhWL2Ui9kdksJcT9Bo';
 const API_BASE_URL = 'https://api.pubg.com/shards/kakao';
 
-// Firebase가 로드될 때까지 대기
-function waitForFirebase() {
-    return new Promise((resolve) => {
-        const checkFirebase = () => {
-            if (window.firebaseDB) {
-                database = window.firebaseDB.database;
-                ref = window.firebaseDB.ref;
-                set = window.firebaseDB.set;
-                onValue = window.firebaseDB.onValue;
-                update = window.firebaseDB.update;
-                remove = window.firebaseDB.remove;
-                console.log('Firebase functions loaded');
-                resolve();
-            } else {
-                setTimeout(checkFirebase, 100);
-            }
-        };
-        checkFirebase();
-    });
-}
-
-// DOM 요소
-const onlineCountElement = document.getElementById('onlineCount');
-const offlineCountElement = document.getElementById('offlineCount');
-const messageElement = document.getElementById('message');
-const addMemberMessageElement = document.getElementById('addMemberMessage');
-const playerNameInput = document.getElementById('playerNameInput');
-const addMemberBtn = document.getElementById('addMemberBtn');
-
-// Firebase 초기화 및 리스너 설정
-async function initializeFirebase() {
-    await waitForFirebase();
-    console.log('Firebase initialized, setting up listener');
+// DOM이 로드된 후 초기화
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing Firebase...');
     
-    // Firebase 실시간 리스너
-    onValue(ref(database, 'members'), (snapshot) => {
-        console.log('Firebase data received:', snapshot.val());
-        members = snapshot.val() || {};
-        updateMemberDisplay();
-        updateStatusCounts();
-    }, (error) => {
-        console.error('Firebase read error:', error);
-        showMessage('데이터베이스 연결 오류: ' + error.message, 'error');
-    });
-}
+    // Firebase 데이터 리스너 설정
+    setTimeout(() => {
+        if (window.firebase && window.firebase.database) {
+            const database = firebase.database();
+            
+            database.ref('members').on('value', (snapshot) => {
+                console.log('Firebase data received:', snapshot.val());
+                members = snapshot.val() || {};
+                updateMemberDisplay();
+                updateStatusCounts();
+            });
+            
+            console.log('Firebase listener set up');
+        } else {
+            console.error('Firebase not available');
+        }
+    }, 1000);
+    
+    // 이벤트 리스너 등록
+    const addMemberBtn = document.getElementById('addMemberBtn');
+    if (addMemberBtn) {
+        addMemberBtn.addEventListener('click', addMember);
+    }
+    
+    const playerNameInput = document.getElementById('playerNameInput');
+    if (playerNameInput) {
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addMember();
+            }
+        });
+    }
+});
 
 // 멤버 표시 업데이트
 function updateMemberDisplay() {
+    console.log('Updating member display with:', members);
+    
     const onlineContainer = document.getElementById('onlineMembers');
     const offlineContainer = document.getElementById('offlineMembers');
     
     if (!onlineContainer || !offlineContainer) {
-        console.error('Members containers not found');
+        console.error('Containers not found');
         return;
     }
     
@@ -71,32 +64,45 @@ function updateMemberDisplay() {
     }));
     
     // 온라인/오프라인 분리
-    const onlineMembers = membersArray.filter(m => m.status === 'online').sort((a, b) => a.name.localeCompare(b.name));
-    const offlineMembers = membersArray.filter(m => m.status !== 'online').sort((a, b) => a.name.localeCompare(b.name));
+    const onlineMembers = membersArray.filter(m => !m.status || m.status === 'online').sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const offlineMembers = membersArray.filter(m => m.status && m.status !== 'online').sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    
+    console.log(`Online: ${onlineMembers.length}, Offline: ${offlineMembers.length}`);
     
     // 온라인 멤버 표시
-    onlineContainer.innerHTML = onlineMembers.map(member => `
-        <div class="member-simple-card" onclick="toggleStatus('${member.id}')">
-            <span class="status-dot online">🟢</span>
-            <span class="member-name">${member.name}</span>
-            <button class="member-delete-btn" onclick="event.stopPropagation(); deleteMember('${member.id}')" title="멤버 삭제">×</button>
-        </div>
-    `).join('') || '<div class="no-members">온라인 멤버가 없습니다</div>';
+    if (onlineMembers.length > 0) {
+        onlineContainer.innerHTML = onlineMembers.map(member => `
+            <div class="member-simple-card" onclick="toggleStatus('${member.id}')">
+                <span class="status-dot online">🟢</span>
+                <span class="member-name">${member.name || 'Unknown'}</span>
+                <button class="member-delete-btn" onclick="event.stopPropagation(); deleteMember('${member.id}')" title="멤버 삭제">×</button>
+            </div>
+        `).join('');
+    } else {
+        onlineContainer.innerHTML = '<div class="no-members">온라인 멤버가 없습니다</div>';
+    }
     
     // 오프라인 멤버 표시
-    offlineContainer.innerHTML = offlineMembers.map(member => `
-        <div class="member-simple-card" onclick="toggleStatus('${member.id}')">
-            <span class="status-dot offline">⚫</span>
-            <span class="member-name">${member.name}</span>
-            <button class="member-delete-btn" onclick="event.stopPropagation(); deleteMember('${member.id}')" title="멤버 삭제">×</button>
-        </div>
-    `).join('') || '<div class="no-members">오프라인 멤버가 없습니다</div>';
+    if (offlineMembers.length > 0) {
+        offlineContainer.innerHTML = offlineMembers.map(member => `
+            <div class="member-simple-card" onclick="toggleStatus('${member.id}')">
+                <span class="status-dot offline">⚫</span>
+                <span class="member-name">${member.name || 'Unknown'}</span>
+                <button class="member-delete-btn" onclick="event.stopPropagation(); deleteMember('${member.id}')" title="멤버 삭제">×</button>
+            </div>
+        `).join('');
+    } else {
+        offlineContainer.innerHTML = '<div class="no-members">오프라인 멤버가 없습니다</div>';
+    }
 }
 
 // 상태 개수 업데이트
 function updateStatusCounts() {
-    const onlineMembers = Object.values(members).filter(m => m.status === 'online');
-    const offlineMembers = Object.values(members).filter(m => m.status !== 'online');
+    const onlineMembers = Object.values(members).filter(m => !m.status || m.status === 'online');
+    const offlineMembers = Object.values(members).filter(m => m.status && m.status !== 'online');
+    
+    const onlineCountElement = document.getElementById('onlineCount');
+    const offlineCountElement = document.getElementById('offlineCount');
     
     if (onlineCountElement) {
         onlineCountElement.textContent = onlineMembers.length;
@@ -114,9 +120,10 @@ async function toggleStatus(memberId) {
     const newStatus = member.status === 'online' ? 'offline' : 'online';
     
     try {
-        await update(ref(database), {
-            [`members/${memberId}/status`]: newStatus
-        });
+        const database = firebase.database();
+        const updates = {};
+        updates[`members/${memberId}/status`] = newStatus;
+        await database.ref().update(updates);
         console.log(`Status updated for ${member.name}: ${newStatus}`);
     } catch (error) {
         console.error('Error updating status:', error);
@@ -126,6 +133,7 @@ async function toggleStatus(memberId) {
 
 // 멤버 추가 함수
 async function addMember() {
+    const playerNameInput = document.getElementById('playerNameInput');
     const playerName = playerNameInput.value.trim();
     
     if (!playerName) {
@@ -133,6 +141,7 @@ async function addMember() {
         return;
     }
     
+    const addMemberBtn = document.getElementById('addMemberBtn');
     addMemberBtn.disabled = true;
     addMemberBtn.textContent = '추가 중...';
     
@@ -179,7 +188,8 @@ async function addMember() {
         };
         
         // Firebase에 저장
-        await set(ref(database, `members/${safeId}`), memberData);
+        const database = firebase.database();
+        await database.ref(`members/${safeId}`).set(memberData);
         
         showAddMemberMessage(`${player.attributes.name}님이 추가되었습니다!`, 'success');
         playerNameInput.value = '';
@@ -200,7 +210,8 @@ async function deleteMember(memberId) {
     
     if (confirm(`${member.name}님을 삭제하시겠습니까?`)) {
         try {
-            await remove(ref(database, `members/${memberId}`));
+            const database = firebase.database();
+            await database.ref(`members/${memberId}`).remove();
             showMessage(`${member.name}님이 삭제되었습니다.`, 'success');
         } catch (error) {
             console.error('Error deleting member:', error);
@@ -211,6 +222,7 @@ async function deleteMember(memberId) {
 
 // 메시지 표시 함수
 function showMessage(text, type = 'info') {
+    const messageElement = document.getElementById('message');
     if (!messageElement) return;
     
     messageElement.textContent = text;
@@ -224,6 +236,7 @@ function showMessage(text, type = 'info') {
 
 // 추가 메시지 표시
 function showAddMemberMessage(text, type = 'info') {
+    const addMemberMessageElement = document.getElementById('addMemberMessage');
     if (!addMemberMessageElement) return;
     
     addMemberMessageElement.textContent = text;
@@ -239,22 +252,3 @@ function showAddMemberMessage(text, type = 'info') {
 window.toggleStatus = toggleStatus;
 window.addMember = addMember;
 window.deleteMember = deleteMember;
-
-// DOM이 로드된 후 초기화
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOM loaded, initializing Firebase...');
-    await initializeFirebase();
-    
-    // 이벤트 리스너 등록
-    if (addMemberBtn) {
-        addMemberBtn.addEventListener('click', addMember);
-    }
-    
-    if (playerNameInput) {
-        playerNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addMember();
-            }
-        });
-    }
-});

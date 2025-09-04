@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>시스템 전체 점검</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        h2 { border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .check-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 CountShot 클랜 홈페이지 시스템 점검</h1>
+    
+    <div class="section">
+        <h2>📊 점검 결과</h2>
+        <div id="summary"></div>
+    </div>
+    
+    <div class="section">
+        <h2>1. Firebase 연결 상태</h2>
+        <div id="firebase-check"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. 멤버 데이터 상태</h2>
+        <div id="members-check"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. 페이지별 작동 상태</h2>
+        <div id="pages-check"></div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKLNkEgvT9x5HqZTDQoR_4vvJLZpTQPxE",
+            authDomain: "cs-homepage-5c3c2.firebaseapp.com",
+            databaseURL: "https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cs-homepage-5c3c2",
+            storageBucket: "cs-homepage-5c3c2.appspot.com",
+            messagingSenderId: "297914930278",
+            appId: "1:297914930278:web:d0b96e0b5e9c9c5f8f8f8f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        let checkResults = {
+            firebase: false,
+            members: false,
+            pages: {
+                index: '점검 중...',
+                members: '점검 중...',
+                teamBuilder: '점검 중...'
+            }
+        };
+        
+        // 1. Firebase 연결 체크
+        function checkFirebase() {
+            const div = document.getElementById('firebase-check');
+            
+            database.ref('.info/connected').on('value', (snap) => {
+                if (snap.val() === true) {
+                    div.innerHTML = '<div class="check-item success">✅ Firebase 연결 성공</div>';
+                    checkResults.firebase = true;
+                    checkMembers();
+                } else {
+                    div.innerHTML = '<div class="check-item error">❌ Firebase 연결 실패</div>';
+                }
+            });
+        }
+        
+        // 2. 멤버 데이터 체크
+        function checkMembers() {
+            const div = document.getElementById('members-check');
+            
+            database.ref('members').once('value').then((snapshot) => {
+                const members = snapshot.val() || {};
+                const memberCount = Object.keys(members).length;
+                
+                if (memberCount > 0) {
+                    const onlineCount = Object.values(members).filter(m => !m.status || m.status === 'online').length;
+                    const offlineCount = Object.values(members).filter(m => m.status && m.status !== 'online').length;
+                    const withStats = Object.values(members).filter(m => m.stats && m.stats.kda).length;
+                    
+                    let html = `
+                        <div class="check-item success">✅ 총 ${memberCount}명의 멤버 데이터 확인</div>
+                        <div class="check-item">온라인: ${onlineCount}명 / 오프라인: ${offlineCount}명</div>
+                        <div class="check-item">스탯 보유: ${withStats}명 / ${memberCount}명</div>
+                    `;
+                    
+                    // 문제 있는 멤버 체크
+                    const issues = [];
+                    Object.entries(members).forEach(([key, member]) => {
+                        if (!member.name) issues.push(`ID ${key}: 이름 없음`);
+                        if (key === 'undefined') issues.push(`잘못된 ID: undefined`);
+                    });
+                    
+                    if (issues.length > 0) {
+                        html += '<div class="check-item warning">⚠️ 문제 발견:</div>';
+                        issues.forEach(issue => {
+                            html += `<div class="check-item error">- ${issue}</div>`;
+                        });
+                    }
+                    
+                    div.innerHTML = html;
+                    checkResults.members = true;
+                } else {
+                    div.innerHTML = '<div class="check-item error">❌ 멤버 데이터가 없습니다</div>';
+                }
+                
+                checkPages();
+            });
+        }
+        
+        // 3. 페이지별 체크
+        function checkPages() {
+            const div = document.getElementById('pages-check');
+            let html = '';
+            
+            // index.html 체크
+            fetch('/index.html')
+                .then(response => {
+                    if (response.ok) {
+                        html += '<div class="check-item success">✅ index.html (티어 관리) - 정상</div>';
+                        checkResults.pages.index = '정상';
+                    } else {
+                        html += '<div class="check-item error">❌ index.html - 접근 불가</div>';
+                        checkResults.pages.index = '오류';
+                    }
+                })
+                .catch(() => {
+                    html += '<div class="check-item warning">⚠️ index.html - 로컬 서버 필요</div>';
+                    checkResults.pages.index = '로컬 서버 필요';
+                })
+                .finally(() => {
+                    // members.html 체크
+                    fetch('/members.html')
+                        .then(response => {
+                            if (response.ok) {
+                                html += '<div class="check-item success">✅ members.html (멤버 관리) - 정상</div>';
+                                checkResults.pages.members = '정상';
+                            } else {
+                                html += '<div class="check-item error">❌ members.html - 접근 불가</div>';
+                                checkResults.pages.members = '오류';
+                            }
+                        })
+                        .catch(() => {
+                            html += '<div class="check-item warning">⚠️ members.html - 로컬 서버 필요</div>';
+                            checkResults.pages.members = '로컬 서버 필요';
+                        })
+                        .finally(() => {
+                            // team-builder.html 체크
+                            fetch('/team-builder.html')
+                                .then(response => {
+                                    if (response.ok) {
+                                        html += '<div class="check-item success">✅ team-builder.html (팀 빌더) - 정상</div>';
+                                        checkResults.pages.teamBuilder = '정상';
+                                    } else {
+                                        html += '<div class="check-item error">❌ team-builder.html - 접근 불가</div>';
+                                        checkResults.pages.teamBuilder = '오류';
+                                    }
+                                })
+                                .catch(() => {
+                                    html += '<div class="check-item warning">⚠️ team-builder.html - 로컬 서버 필요</div>';
+                                    checkResults.pages.teamBuilder = '로컬 서버 필요';
+                                })
+                                .finally(() => {
+                                    div.innerHTML = html;
+                                    updateSummary();
+                                });
+                        });
+                });
+        }
+        
+        // 요약 업데이트
+        function updateSummary() {
+            const div = document.getElementById('summary');
+            let status = 'success';
+            
+            if (!checkResults.firebase || !checkResults.members) {
+                status = 'error';
+            }
+            
+            const className = status === 'success' ? 'success' : 'error';
+            const icon = status === 'success' ? '✅' : '❌';
+            const message = status === 'success' ? '모든 시스템 정상 작동' : '일부 문제 발견';
+            
+            div.innerHTML = `
+                <h3 class="${className}">${icon} ${message}</h3>
+                <ul>
+                    <li>Firebase 연결: ${checkResults.firebase ? '✅ 정상' : '❌ 오류'}</li>
+                    <li>멤버 데이터: ${checkResults.members ? '✅ 정상' : '❌ 오류'}</li>
+                    <li>페이지 상태:
+                        <ul>
+                            <li>티어 관리: ${checkResults.pages.index}</li>
+                            <li>멤버 관리: ${checkResults.pages.members}</li>
+                            <li>팀 빌더: ${checkResults.pages.teamBuilder}</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p><strong>권장사항:</strong></p>
+                <ul>
+                    <li>로컬 서버 실행 중: http://localhost:8000</li>
+                    <li>Firebase Database URL: asia-southeast1 리전 사용</li>
+                    <li>모든 페이지 정상 작동 확인</li>
+                </ul>
+            `;
+        }
+        
+        // 점검 시작
+        checkFirebase();
+    </script>
+</body>
+</html>

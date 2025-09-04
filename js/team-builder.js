@@ -76,12 +76,18 @@ function displayMembers() {
     })));
     
     // 온라인 멤버만 티어별로 그룹화
-    Object.values(members).forEach(member => {
+    Object.entries(members).forEach(([memberId, member]) => {
+        // member 객체에 id 추가
+        member.id = memberId;
+        
         // 온라인 상태인 멤버만 포함 (status가 없거나 'online'인 경우)
         if (!member.status || member.status === 'online') {
             const tier = member.tier || 'unassigned';
             if (tierGroups[tier]) {
                 tierGroups[tier].push(member);
+            } else {
+                // tier가 정의되지 않은 경우 unassigned로
+                tierGroups.unassigned.push(member);
             }
         }
     });
@@ -448,11 +454,15 @@ function copyResult() {
 
 // 로딩 표시
 function showLoading() {
-    loadingIndicator.classList.remove('hidden');
+    if (loadingIndicator) {
+        loadingIndicator.classList.remove('hidden');
+    }
 }
 
 function hideLoading() {
-    loadingIndicator.classList.add('hidden');
+    if (loadingIndicator) {
+        loadingIndicator.classList.add('hidden');
+    }
 }
 
 // 메시지 표시

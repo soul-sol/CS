@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>전체 멤버 ID 점검</title>
+    <style>
+        body { 
+            font-family: 'Courier New', monospace; 
+            padding: 20px; 
+            background: #0a0a0a; 
+            color: #0f0;
+        }
+        h1 { color: #fff; }
+        .member-check {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+        }
+        .valid { border-color: #4CAF50; }
+        .invalid { border-color: #f44336; background: #2a1515; }
+        .stats-ok { color: #4CAF50; }
+        .stats-missing { color: #ff9800; }
+        .id-ok { color: #4CAF50; }
+        .id-bad { color: #f44336; }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #45a049; }
+        .summary {
+            margin: 20px 0;
+            padding: 15px;
+            background: #1a1a1a;
+            border: 2px solid #4CAF50;
+        }
+        pre { 
+            background: #000; 
+            padding: 10px; 
+            overflow: auto;
+            color: #0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 전체 멤버 Firebase 데이터 점검</h1>
+    
+    <button onclick="checkAllMembers()">전체 멤버 점검</button>
+    <button onclick="fixProblems()">문제 자동 수정</button>
+    <button onclick="exportData()">데이터 내보내기</button>
+    
+    <div id="summary" class="summary"></div>
+    <div id="results"></div>
+    <pre id="exportArea" style="display:none;"></pre>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWEWmussrZcqv4LgCvjUdcuzRcaUST3Ls",
+            authDomain: "cs-homepage-5c3c2.firebaseapp.com",
+            databaseURL: "https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cs-homepage-5c3c2",
+            storageBucket: "cs-homepage-5c3c2.firebasestorage.app",
+            messagingSenderId: "117726976721",
+            appId: "1:117726976721:web:f9dd3297e82113414183f0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        let allMembers = {};
+        let problemMembers = [];
+        
+        window.checkAllMembers = async function() {
+            const resultsDiv = document.getElementById('results');
+            const summaryDiv = document.getElementById('summary');
+            resultsDiv.innerHTML = '';
+            summaryDiv.innerHTML = '<h2>점검 중...</h2>';
+            
+            try {
+                const snapshot = await get(ref(database, 'members'));
+                allMembers = snapshot.val();
+                
+                if (!allMembers) {
+                    resultsDiv.innerHTML = '<div class="invalid">멤버 데이터가 없습니다!</div>';
+                    return;
+                }
+                
+                let totalCount = 0;
+                let validIdCount = 0;
+                let invalidIdCount = 0;
+                let withStatsCount = 0;
+                let withoutStatsCount = 0;
+                let onlineCount = 0;
+                let offlineCount = 0;
+                problemMembers = [];
+                
+                // 멤버별 체크
+                Object.entries(allMembers).forEach(([firebaseKey, member]) => {
+                    totalCount++;
+                    
+                    const memberDiv = document.createElement('div');
+                    memberDiv.className = 'member-check';
+                    
+                    let issues = [];
+                    
+                    // ID 체크
+                    const hasValidOriginalId = member.originalId && member.originalId.startsWith('account.');
+                    const hasValidPubgId = member.pubgId && member.pubgId.startsWith('account.');
+                    const hasValidId = hasValidOriginalId || hasValidPubgId;
+                    
+                    if (hasValidId) {
+                        validIdCount++;
+                    } else {
+                        invalidIdCount++;
+                        issues.push('ID 문제');
+                        problemMembers.push({
+                            key: firebaseKey,
+                            name: member.name,
+                            issue: 'NO_VALID_ID'
+                        });
+                    }
+                    
+                    // 스탯 체크
+                    const hasStats = member.stats && 
+                                   (member.stats.kda !== '0.0' || 
+                                    member.stats.avgDamage > 0 ||
+                                    member.stats.roundsPlayed > 0);
+                    
+                    if (hasStats) {
+                        withStatsCount++;
+                    } else {
+                        withoutStatsCount++;
+                        issues.push('스탯 없음');
+                    }
+                    
+                    // 상태 체크
+                    if (!member.status || member.status === 'online') {
+                        onlineCount++;
+                    } else {
+                        offlineCount++;
+                    }
+                    
+                    // Firebase Key와 ID 일치 체크
+                    const expectedKey = firebaseKey.replace(/_/g, '.');
+                    const idMatches = (member.originalId === expectedKey) || 
+                                     (member.pubgId === expectedKey);
+                    
+                    // 결과 표시
+                    memberDiv.className = issues.length > 0 ? 'member-check invalid' : 'member-check valid';
+                    
+                    memberDiv.innerHTML = `
+                        <strong>${totalCount}. ${member.name}</strong> 
+                        <span style="color: #666;">[${member.tier || 'unassigned'}]</span><br>
+                        Firebase Key: <code>${firebaseKey}</code><br>
+                        Original ID: <span class="${hasValidOriginalId ? 'id-ok' : 'id-bad'}">${member.originalId || 'NONE'}</span><br>
+                        PUBG ID: <span class="${hasValidPubgId ? 'id-ok' : 'id-bad'}">${member.pubgId || 'NONE'}</span><br>
+                        스탯: <span class="${hasStats ? 'stats-ok' : 'stats-missing'}">
+                            ${hasStats ? `KDA: ${member.stats.kda}, DMG: ${member.stats.avgDamage}` : 'NO STATS'}
+                        </span><br>
+                        상태: ${member.status || 'online'}<br>
+                        ${issues.length > 0 ? `<span style="color: #f44336;">⚠️ 문제: ${issues.join(', ')}</span>` : '✅ 정상'}
+                    `;
+                    
+                    resultsDiv.appendChild(memberDiv);
+                });
+                
+                // 요약 표시
+                summaryDiv.innerHTML = `
+                    <h2>📊 점검 결과 요약</h2>
+                    <div>총 멤버 수: <strong>${totalCount}명</strong></div>
+                    <div>온라인: <strong>${onlineCount}명</strong> / 오프라인: <strong>${offlineCount}명</strong></div>
+                    <div style="color: ${validIdCount === totalCount ? '#4CAF50' : '#ff9800'}">
+                        유효한 ID: <strong>${validIdCount}명</strong> / 
+                        문제 있는 ID: <strong style="color: #f44336">${invalidIdCount}명</strong>
+                    </div>
+                    <div>스탯 있음: <strong>${withStatsCount}명</strong> / 
+                         스탯 없음: <strong>${withoutStatsCount}명</strong>
+                    </div>
+                    ${problemMembers.length > 0 ? 
+                        `<div style="color: #f44336; margin-top: 10px;">
+                            ⚠️ 수정이 필요한 멤버: ${problemMembers.length}명<br>
+                            ${problemMembers.map(p => p.name).join(', ')}
+                        </div>` : 
+                        '<div style="color: #4CAF50; margin-top: 10px;">✅ 모든 멤버 정상!</div>'
+                    }
+                `;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="invalid">오류 발생: ${error.message}</div>`;
+            }
+        }
+        
+        window.fixProblems = async function() {
+            if (problemMembers.length === 0) {
+                alert('수정할 문제가 없습니다!');
+                return;
+            }
+            
+            if (!confirm(`${problemMembers.length}명의 멤버 문제를 수정하시겠습니까?`)) {
+                return;
+            }
+            
+            const updates = {};
+            
+            for (const problem of problemMembers) {
+                if (problem.issue === 'NO_VALID_ID') {
+                    // 이름으로 PUBG API 검색해서 ID 찾기 (실제 구현 필요)
+                    console.log(`${problem.name}의 ID를 찾아야 함`);
+                    // 임시로 Firebase Key를 ID로 변환
+                    const probableId = problem.key.replace(/_/g, '.');
+                    if (probableId.startsWith('account.')) {
+                        updates[`members/${problem.key}/originalId`] = probableId;
+                        updates[`members/${problem.key}/pubgId`] = probableId;
+                    }
+                }
+            }
+            
+            if (Object.keys(updates).length > 0) {
+                try {
+                    await update(ref(database), updates);
+                    alert('수정 완료! 다시 점검해주세요.');
+                    checkAllMembers();
+                } catch (error) {
+                    alert('수정 실패: ' + error.message);
+                }
+            }
+        }
+        
+        window.exportData = function() {
+            const exportArea = document.getElementById('exportArea');
+            exportArea.style.display = 'block';
+            exportArea.textContent = JSON.stringify(allMembers, null, 2);
+        }
+        
+        // 페이지 로드 시 자동 실행
+        window.addEventListener('load', () => {
+            checkAllMembers();
+        });
+    </script>
+</body>
+</html>
