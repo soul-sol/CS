@@ -1,47 +1,18 @@
-name: Update PUBG Stats
+# This workflow has been replaced by collect-stats.yml
+# Disabled to prevent errors
+name: Update PUBG Stats (DISABLED)
 
 on:
-  schedule:
-    # 매시간 실행 (:00분에)
-    - cron: '0 * * * *'
-  workflow_dispatch:  # 수동 실행 가능
+  workflow_dispatch:  # 수동 실행만 가능 (자동 실행 비활성화)
 
 jobs:
   update-stats:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
+    - name: Workflow Disabled
       run: |
-        npm ci
-        npm install firebase-admin node-fetch@2
-    
-    - name: Create service account file
-      run: |
-        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase-service-account.json
-    
-    - name: Run stats update
-      run: node update-stats.js
-      env:
-        NODE_ENV: production
-    
-    - name: Clean up
-      if: always()
-      run: rm -f firebase-service-account.json
-    
-    - name: Notify success
-      if: success()
-      run: echo "✅ Stats update completed successfully at $(date)"
-    
-    - name: Notify failure
-      if: failure()
-      run: echo "❌ Stats update failed at $(date)"
+        echo "❌ This workflow has been disabled."
+        echo "Please use 'Collect PUBG Stats' workflow instead."
+        echo "To run stats collection, go to Actions tab and run 'Collect PUBG Stats' workflow."
+        exit 1

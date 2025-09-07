@@ -30,6 +30,7 @@ const selectAllBtn = document.getElementById('selectAllBtn');
 const deselectAllBtn = document.getElementById('deselectAllBtn');
 const teamCountInput = document.getElementById('teamCount');
 const requireTier1Checkbox = document.getElementById('requireTier1');
+const requireTier2Checkbox = document.getElementById('requireTier2');
 const balanceByStatsCheckbox = document.getElementById('balanceByStats');
 const generateTeamsBtn = document.getElementById('generateTeamsBtn');
 const teamsDisplay = document.getElementById('teamsDisplay');
@@ -177,6 +178,7 @@ function generateTeams() {
     const selectedMembersList = Array.from(selectedMembers).map(id => members[id]).filter(m => m);
     const teamCount = parseInt(teamCountInput.value);
     const requireTier1 = requireTier1Checkbox.checked;
+    const requireTier2 = requireTier2Checkbox.checked;
     const balanceByStats = balanceByStatsCheckbox.checked;
     
     // 유효성 검사
@@ -203,10 +205,33 @@ function generateTeams() {
         return;
     }
     
-    // 1티어 필수 옵션 체크 (최소 1명이 있는지만 확인)
+    // 티어 필수 옵션 체크
     const tier1Members = selectedMembersList.filter(m => m.tier === 'tier1');
-    if (requireTier1 && tier1Members.length === 0) {
+    const tier2Members = selectedMembersList.filter(m => m.tier === 'tier2');
+    
+    // 1티어와 2티어 모두 필수인 경우
+    if (requireTier1 && requireTier2) {
+        if (tier1Members.length === 0 && tier2Members.length === 0) {
+            showMessage(`1티어와 2티어 멤버가 모두 없습니다. 각각 최소 1명 이상 필요합니다.`, 'error');
+            return;
+        } else if (tier1Members.length === 0) {
+            showMessage(`1티어 멤버가 없습니다. 최소 1명 이상 필요합니다.`, 'error');
+            return;
+        } else if (tier2Members.length === 0) {
+            showMessage(`2티어 멤버가 없습니다. 최소 1명 이상 필요합니다.`, 'error');
+            return;
+        }
+        // 각 팀에 1티어와 2티어를 모두 배치하려면 충분한 멤버가 있는지 확인
+        const tier1NeededCount = Math.min(teamCount, tier1Members.length);
+        const tier2NeededCount = Math.min(teamCount, tier2Members.length);
+        if (tier1NeededCount + tier2NeededCount > teamCount * 2) {
+            // 이 조건은 실제로는 발생하지 않을 것임 (최소값을 사용하므로)
+        }
+    } else if (requireTier1 && tier1Members.length === 0) {
         showMessage(`1티어 멤버가 없습니다. 최소 1명 이상 필요합니다.`, 'error');
+        return;
+    } else if (requireTier2 && tier2Members.length === 0) {
+        showMessage(`2티어 멤버가 없습니다. 최소 1명 이상 필요합니다.`, 'error');
         return;
     }
     
@@ -214,7 +239,7 @@ function generateTeams() {
     
     // 팀 구성 로직
     setTimeout(() => {
-        const teams = createTeams(selectedMembersList, teamCount, requireTier1, balanceByStats);
+        const teams = createTeams(selectedMembersList, teamCount, requireTier1, requireTier2, balanceByStats);
         displayTeams(teams);
         hideLoading();
         showMessage('팀이 성공적으로 생성되었습니다!', 'success');
@@ -222,35 +247,119 @@ function generateTeams() {
 }
 
 // 팀 생성 로직
-function createTeams(membersList, teamCount, requireTier1, balanceByStats) {
+function createTeams(membersList, teamCount, requireTier1, requireTier2, balanceByStats) {
     const teams = Array.from({ length: teamCount }, () => []);
     let availableMembers = [...membersList];
     
-    // 1티어 먼저 배치 (가능한 팀에만)
-    if (requireTier1) {
-        const tier1Members = availableMembers.filter(m => m.tier === 'tier1');
-        const otherMembers = availableMembers.filter(m => m.tier !== 'tier1');
+    // 티어별 멤버 분류
+    const tier1Members = availableMembers.filter(m => m.tier === 'tier1');
+    const tier2Members = availableMembers.filter(m => m.tier === 'tier2');
+    
+    // 1티어와 2티어 모두 필수인 경우
+    if (requireTier1 && requireTier2) {
+        // 1티어와 2티어를 제외한 나머지 멤버
+        availableMembers = availableMembers.filter(m => m.tier !== 'tier1' && m.tier !== 'tier2');
         
-        // 1티어를 각 팀에 하나씩 배치 (있는 만큼만)
-        tier1Members.forEach((member, index) => {
-            if (index < teamCount) {
-                // 팀 수보다 적으면 있는 만큼만 배치
-                teams[index].push(member);
-            } else {
-                // 남은 1티어는 가장 적은 팀에 배치
-                let minTeamIndex = 0;
-                let minTeamSize = teams[0].length;
-                for (let i = 1; i < teamCount; i++) {
-                    if (teams[i].length < minTeamSize) {
-                        minTeamSize = teams[i].length;
-                        minTeamIndex = i;
-                    }
-                }
-                teams[minTeamIndex].push(member);
+        // 멤버들을 랜덤하게 섞기
+        shuffleArray(tier1Members);
+        shuffleArray(tier2Members);
+        
+        // 팀 배치를 위한 랜덤 인덱스 생성
+        const teamIndices = Array.from({ length: teamCount }, (_, i) => i);
+        shuffleArray(teamIndices);
+        
+        // 각 팀에 1티어와 2티어를 하나씩 배치 (랜덤한 팀 순서로)
+        for (let i = 0; i < teamCount; i++) {
+            const teamIndex = teamIndices[i];
+            // 1티어 배치
+            if (i < tier1Members.length) {
+                teams[teamIndex].push(tier1Members[i]);
             }
-        });
+            // 2티어 배치
+            if (i < tier2Members.length) {
+                teams[teamIndex].push(tier2Members[i]);
+            }
+        }
         
-        availableMembers = otherMembers;
+        // 남은 1티어 배치
+        for (let i = teamCount; i < tier1Members.length; i++) {
+            let minTeamIndex = 0;
+            let minTeamSize = teams[0].length;
+            for (let j = 1; j < teamCount; j++) {
+                if (teams[j].length < minTeamSize) {
+                    minTeamSize = teams[j].length;
+                    minTeamIndex = j;
+                }
+            }
+            teams[minTeamIndex].push(tier1Members[i]);
+        }
+        
+        // 남은 2티어 배치
+        for (let i = teamCount; i < tier2Members.length; i++) {
+            let minTeamIndex = 0;
+            let minTeamSize = teams[0].length;
+            for (let j = 1; j < teamCount; j++) {
+                if (teams[j].length < minTeamSize) {
+                    minTeamSize = teams[j].length;
+                    minTeamIndex = j;
+                }
+            }
+            teams[minTeamIndex].push(tier2Members[i]);
+        }
+        
+    } else if (requireTier1) {
+        // 1티어만 필수인 경우
+        availableMembers = availableMembers.filter(m => m.tier !== 'tier1');
+        shuffleArray(tier1Members);
+        
+        // 팀 배치를 위한 랜덤 인덱스 생성
+        const teamIndices = Array.from({ length: teamCount }, (_, i) => i);
+        shuffleArray(teamIndices);
+        
+        // 각 팀에 1티어 하나씩 배치 (랜덤한 팀 순서로)
+        for (let i = 0; i < teamCount && i < tier1Members.length; i++) {
+            teams[teamIndices[i]].push(tier1Members[i]);
+        }
+        
+        // 남은 1티어 배치
+        for (let i = teamCount; i < tier1Members.length; i++) {
+            let minTeamIndex = 0;
+            let minTeamSize = teams[0].length;
+            for (let j = 1; j < teamCount; j++) {
+                if (teams[j].length < minTeamSize) {
+                    minTeamSize = teams[j].length;
+                    minTeamIndex = j;
+                }
+            }
+            teams[minTeamIndex].push(tier1Members[i]);
+        }
+        
+    } else if (requireTier2) {
+        // 2티어만 필수인 경우
+        availableMembers = availableMembers.filter(m => m.tier !== 'tier2');
+        shuffleArray(tier2Members);
+        
+        // 팀 배치를 위한 랜덤 인덱스 생성
+        const teamIndices = Array.from({ length: teamCount }, (_, i) => i);
+        shuffleArray(teamIndices);
+        
+        // 각 팀에 2티어 하나씩 배치 (랜덤한 팀 순서로)
+        for (let i = 0; i < teamCount && i < tier2Members.length; i++) {
+            teams[teamIndices[i]].push(tier2Members[i]);
+        }
+        
+        // 남은 2티어 배치
+        for (let i = teamCount; i < tier2Members.length; i++) {
+            let minTeamIndex = 0;
+            let minTeamSize = teams[0].length;
+            for (let j = 1; j < teamCount; j++) {
+                if (teams[j].length < minTeamSize) {
+                    minTeamSize = teams[j].length;
+                    minTeamIndex = j;
+                }
+            }
+            teams[minTeamIndex].push(tier2Members[i]);
+        }
     }
     
     // 나머지 멤버 배치
@@ -387,18 +496,24 @@ function getTeamTierComposition(team) {
         tier1: 0,
         tier2: 0,
         tier3: 0,
+        tier4: 0,
         unassigned: 0
     };
     
     team.forEach(member => {
         const tier = member.tier || 'unassigned';
-        tierCounts[tier]++;
+        if (tierCounts.hasOwnProperty(tier)) {
+            tierCounts[tier]++;
+        } else {
+            tierCounts.unassigned++;
+        }
     });
     
     const composition = [];
     if (tierCounts.tier1 > 0) composition.push(`1티어 ${tierCounts.tier1}`);
     if (tierCounts.tier2 > 0) composition.push(`2티어 ${tierCounts.tier2}`);
     if (tierCounts.tier3 > 0) composition.push(`3티어 ${tierCounts.tier3}`);
+    if (tierCounts.tier4 > 0) composition.push(`4티어 ${tierCounts.tier4}`);
     if (tierCounts.unassigned > 0) composition.push(`무소속 ${tierCounts.unassigned}`);
     
     return composition.join(', ');
@@ -410,6 +525,7 @@ function getTierClass(tier) {
         case 'tier1': return 'member-gold';
         case 'tier2': return 'member-red';
         case 'tier3': return 'member-green';
+        case 'tier4': return 'member-blue';
         default: return 'member-gray';
     }
 }
@@ -420,6 +536,7 @@ function getTierBadge(tier) {
         case 'tier1': return '👑';
         case 'tier2': return '🔥';
         case 'tier3': return '🌟';
+        case 'tier4': return '⚔️';
         default: return '📋';
     }
 }
