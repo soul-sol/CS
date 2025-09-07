@@ -93,8 +93,7 @@ async function getPlayerStats(playerId) {
             kills: mainStats.kills || 0,
             deaths: mainStats.deaths || 0,
             kd: mainStats.deaths > 0 ? 
-                (mainStats.kills / mainStats.deaths).toFixed(2) : 
-                (mainStats.kills > 0 ? mainStats.kills.toFixed(2) : '0.00'),
+                (mainStats.kills / mainStats.deaths).toFixed(2) : '0.00',
             avgDamage: mainStats.damageDealt && mainStats.roundsPlayed ? 
                 Math.round(mainStats.damageDealt / mainStats.roundsPlayed) : 0,
             wins: mainStats.wins || 0,
