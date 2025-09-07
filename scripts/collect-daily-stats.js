@@ -2,8 +2,7 @@ const admin = require('firebase-admin');
 const axios = require('axios');
 
 // 환경 변수 설정
-// 새로운 API 키가 필요합니다. https://developer.pubg.com/에서 발급받으세요.
-const PUBG_API_KEY = process.env.PUBG_API_KEY || 'YOUR_API_KEY_HERE';
+const PUBG_API_KEY = process.env.PUBG_API_KEY || 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI4MjU3MDQyMC02OTQ4LTAxM2UtNDg5ZC00MjVkMGRiNDBlMGYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzU2NzIwODcwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii00OTcwY2YwOS0zY2RkLTRlYTUtYjVjMy01MGVmY2VlNzExOTYifQ.JNUWXi2YT78qtXFkTHHiQtCaMIXqKTQRSWwRtimeI94';
 const API_BASE_URL = 'https://api.pubg.com/shards/kakao';
 
 // Firebase Admin 초기화
