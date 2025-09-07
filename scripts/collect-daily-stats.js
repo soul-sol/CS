@@ -67,9 +67,27 @@ async function getPlayerId(playerName) {
     }
 }
 
-// 플레이어 통계 가져오기
-async function getPlayerStats(playerId) {
+// 현재 시즌 ID 가져오기
+async function getCurrentSeason() {
     try {
+        await waitForRateLimit();
+        const response = await axios.get(
+            `${API_BASE_URL}/seasons`,
+            { headers }
+        );
+        
+        const currentSeason = response.data.data.find(s => s.attributes.isCurrentSeason);
+        return currentSeason ? currentSeason.id : null;
+    } catch (error) {
+        console.error('Failed to get current season:', error.message);
+        return null;
+    }
+}
+
+// 플레이어 통계 가져오기
+async function getPlayerStats(playerId, playerName) {
+    try {
+        // 1. Lifetime 통계 가져오기
         await waitForRateLimit(); // Rate limit 대기
         const response = await axios.get(
             `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
@@ -89,7 +107,42 @@ async function getPlayerStats(playerId) {
             return (current.roundsPlayed || 0) > (prev.roundsPlayed || 0) ? current : prev;
         }, {});
         
+        // 2. 현재 시즌 랭크 통계 가져오기 (티어 정보)
+        let tier = null;
+        let rankedKda = '0.0';
+        let rankedAvgDamage = 0;
+        
+        const currentSeasonId = await getCurrentSeason();
+        if (currentSeasonId) {
+            try {
+                await waitForRateLimit();
+                const rankedResponse = await axios.get(
+                    `${API_BASE_URL}/players/${playerId}/seasons/${currentSeasonId}/ranked`,
+                    { headers }
+                );
+                
+                const rankedStats = rankedResponse.data.data.attributes.rankedGameModeStats;
+                const squadRanked = rankedStats?.squad || {};
+                
+                if (squadRanked.roundsPlayed && squadRanked.roundsPlayed > 0) {
+                    // 티어 정보 추출
+                    if (squadRanked.currentTier) {
+                        const tierName = squadRanked.currentTier.tier.charAt(0).toUpperCase() + 
+                                       squadRanked.currentTier.tier.slice(1).toLowerCase();
+                        tier = `${tierName} ${squadRanked.currentTier.subTier}`;
+                    }
+                    
+                    rankedKda = squadRanked.kda ? squadRanked.kda.toFixed(2) : '0.0';
+                    rankedAvgDamage = squadRanked.damageDealt && squadRanked.roundsPlayed ? 
+                        Math.round(squadRanked.damageDealt / squadRanked.roundsPlayed) : 0;
+                }
+            } catch (rankedError) {
+                console.log(`  Ranked stats not available for ${playerName}`);
+            }
+        }
+        
         return {
+            // 일반 통계
             kills: mainStats.kills || 0,
             deaths: mainStats.deaths || 0,
             kd: mainStats.deaths > 0 ? 
@@ -110,7 +163,11 @@ async function getPlayerStats(playerId) {
             timeSurvived: mainStats.timeSurvived || 0,
             walkDistance: Math.round(mainStats.walkDistance || 0),
             rideDistance: Math.round(mainStats.rideDistance || 0),
-            swimDistance: Math.round(mainStats.swimDistance || 0)
+            swimDistance: Math.round(mainStats.swimDistance || 0),
+            // 랭크 통계
+            tier: tier,
+            rankedKda: rankedKda,
+            rankedAvgDamage: rankedAvgDamage
         };
     } catch (error) {
         console.error(`Error fetching stats for player ID ${playerId}:`, error.message);
@@ -147,7 +204,7 @@ async function collectDailyStats() {
             }
             
             // 통계 가져오기 (waitForRateLimit이 내부에 포함됨)
-            const stats = await getPlayerStats(playerId);
+            const stats = await getPlayerStats(playerId, playerName);
             if (!stats) {
                 console.error(`Could not fetch stats for ${playerName}`);
                 errors.push(`${playerName}: Stats fetch failed`);
@@ -162,7 +219,7 @@ async function collectDailyStats() {
                 timestamp: Date.now()
             };
             
-            console.log(`✓ ${playerName}: KD ${stats.kd}, Avg Damage ${stats.avgDamage}`);
+            console.log(`✓ ${playerName}: KD ${stats.kd}, Avg Damage ${stats.avgDamage}, Tier: ${stats.tier || 'Unranked'}`);
         }
         
         // Firebase에 저장
