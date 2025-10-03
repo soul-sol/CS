@@ -1,0 +1,14 @@
+# Firebase Service Account Key - DO NOT COMMIT
+firebase-service-account.json
+*.json
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
