@@ -100,6 +100,10 @@ async function getPlayerStats(playerId, playerName) {
         const squadTpp = stats['squad'] || {};
         const squadFpp = stats['squad-fpp'] || {};
         
+        // 디버그: 원본 데이터 확인
+        console.log(`  Squad TPP: ${squadTpp.roundsPlayed || 0} games, ${squadTpp.kills || 0} kills, ${squadTpp.deaths || 0} deaths`);
+        console.log(`  Squad FPP: ${squadFpp.roundsPlayed || 0} games, ${squadFpp.kills || 0} kills, ${squadFpp.deaths || 0} deaths`);
+        
         // Squad TPP와 FPP 통계 합산
         const mainStats = {
             kills: (squadTpp.kills || 0) + (squadFpp.kills || 0),
@@ -154,6 +158,9 @@ async function getPlayerStats(playerId, playerName) {
             }
         }
         
+        // 디버그: 합산된 통계 확인
+        console.log(`  Total: ${mainStats.roundsPlayed} games, ${mainStats.kills} kills, ${mainStats.deaths} deaths, ${mainStats.assists} assists`);
+        
         // K/D 계산 (kills / deaths)
         const kd = mainStats.deaths > 0 ? 
             (mainStats.kills || 0) / mainStats.deaths : 0;
@@ -161,6 +168,8 @@ async function getPlayerStats(playerId, playerName) {
         // KDA 계산 ((kills + assists) / roundsPlayed) - 게임당 평균 기여도
         const kda = mainStats.roundsPlayed > 0 ? 
             ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.roundsPlayed : 0;
+        
+        console.log(`  Calculated: K/D=${kd.toFixed(2)}, KDA=${kda.toFixed(2)}`);
         
         return {
             // 일반 통계
