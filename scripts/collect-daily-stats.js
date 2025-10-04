@@ -96,16 +96,29 @@ async function getPlayerStats(playerId, playerName) {
         
         const stats = response.data.data.attributes.gameModeStats;
         
-        // 스쿼드 FPP 통계를 우선으로, 없으면 스쿼드 통계 사용
+        // Squad 모드만 수집 (TPP + FPP 합산)
+        const squadTpp = stats['squad'] || {};
         const squadFpp = stats['squad-fpp'] || {};
-        const squad = stats['squad'] || {};
-        const soloFpp = stats['solo-fpp'] || {};
-        const solo = stats['solo'] || {};
         
-        // 가장 많이 플레이한 모드의 통계 사용
-        const mainStats = [squadFpp, squad, soloFpp, solo].reduce((prev, current) => {
-            return (current.roundsPlayed || 0) > (prev.roundsPlayed || 0) ? current : prev;
-        }, {});
+        // Squad TPP와 FPP 통계 합산
+        const mainStats = {
+            kills: (squadTpp.kills || 0) + (squadFpp.kills || 0),
+            deaths: (squadTpp.deaths || 0) + (squadFpp.deaths || 0),
+            assists: (squadTpp.assists || 0) + (squadFpp.assists || 0),
+            damageDealt: (squadTpp.damageDealt || 0) + (squadFpp.damageDealt || 0),
+            roundsPlayed: (squadTpp.roundsPlayed || 0) + (squadFpp.roundsPlayed || 0),
+            wins: (squadTpp.wins || 0) + (squadFpp.wins || 0),
+            top10s: (squadTpp.top10s || 0) + (squadFpp.top10s || 0),
+            headshotKills: (squadTpp.headshotKills || 0) + (squadFpp.headshotKills || 0),
+            longestKill: Math.max(squadTpp.longestKill || 0, squadFpp.longestKill || 0),
+            dBNOs: (squadTpp.dBNOs || 0) + (squadFpp.dBNOs || 0),
+            revives: (squadTpp.revives || 0) + (squadFpp.revives || 0),
+            teamKills: (squadTpp.teamKills || 0) + (squadFpp.teamKills || 0),
+            timeSurvived: (squadTpp.timeSurvived || 0) + (squadFpp.timeSurvived || 0),
+            walkDistance: (squadTpp.walkDistance || 0) + (squadFpp.walkDistance || 0),
+            rideDistance: (squadTpp.rideDistance || 0) + (squadFpp.rideDistance || 0),
+            swimDistance: (squadTpp.swimDistance || 0) + (squadFpp.swimDistance || 0)
+        };
         
         // 2. 현재 시즌 랭크 통계 가져오기 (티어 정보)
         let tier = null;
