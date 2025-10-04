@@ -158,7 +158,11 @@ function updateMemberStats() {
     // 현재 통계 표시
     const currentStats = memberData.currentStats;
     if (currentStats) {
-        document.getElementById('currentKD').textContent = currentStats.kd || '0.00';
+        // K/D 값 정상화 (100 이상은 비정상)
+        let kdValue = parseFloat(currentStats.kd) || 0;
+        if (kdValue > 100) kdValue = 0;
+        document.getElementById('currentKD').textContent = kdValue.toFixed(2);
+        
         document.getElementById('currentDamage').textContent = currentStats.avgDamage || '0';
         document.getElementById('currentKills').textContent = currentStats.kills || '0';
         document.getElementById('currentWinRate').textContent = 
@@ -250,7 +254,11 @@ function drawMemberChart() {
     
     switch (selectedChartType) {
         case 'kd':
-            data = filteredData.map(([_, stats]) => parseFloat(stats.kd) || 0);
+            data = filteredData.map(([_, stats]) => {
+                const kd = parseFloat(stats.kd) || 0;
+                // 비정상 값 필터링
+                return kd > 100 ? 0 : kd;
+            });
             label = 'K/D Ratio';
             borderColor = 'rgb(255, 99, 132)';
             backgroundColor = 'rgba(255, 99, 132, 0.1)';
@@ -463,7 +471,11 @@ function updateClanRankings() {
     Object.entries(members).forEach(([key, member]) => {
         if (member.currentStats) {
             const stats = member.currentStats;
-            rankings.kd.push({ name: member.name, value: parseFloat(stats.kd) || 0 });
+            // K/D 값 정상화
+            let kdValue = parseFloat(stats.kd) || 0;
+            if (kdValue > 100) kdValue = 0;
+            
+            rankings.kd.push({ name: member.name, value: kdValue });
             rankings.damage.push({ name: member.name, value: stats.avgDamage || 0 });
             rankings.kills.push({ name: member.name, value: stats.kills || 0 });
             rankings.wins.push({ name: member.name, value: stats.wins || 0 });
