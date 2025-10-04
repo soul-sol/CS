@@ -145,9 +145,9 @@ async function getPlayerStats(playerId, playerName) {
         const kd = mainStats.deaths > 0 ? 
             (mainStats.kills || 0) / mainStats.deaths : 0;
         
-        // KDA 계산 ((kills + assists) / deaths)
-        const kda = mainStats.deaths > 0 ? 
-            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.deaths : 0;
+        // KDA 계산 ((kills + assists) / roundsPlayed) - 게임당 평균 기여도
+        const kda = mainStats.roundsPlayed > 0 ? 
+            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.roundsPlayed : 0;
         
         return {
             // 일반 통계
