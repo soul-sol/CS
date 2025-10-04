@@ -242,6 +242,9 @@ async function collectDailyStats() {
                 kills: data.stats.kills,
                 wins: data.stats.wins,
                 roundsPlayed: data.stats.roundsPlayed,
+                tier: data.stats.tier,  // 티어 정보 추가
+                rankedKda: data.stats.rankedKda,  // 랭크 KDA 추가
+                rankedAvgDamage: data.stats.rankedAvgDamage,  // 랭크 평균 데미지 추가
                 timestamp: data.timestamp
             });
         }
