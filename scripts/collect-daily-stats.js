@@ -101,13 +101,17 @@ async function getPlayerStats(playerId, playerName) {
         const squadFpp = stats['squad-fpp'] || {};
         
         // 디버그: 원본 데이터 확인
-        console.log(`  Squad TPP: ${squadTpp.roundsPlayed || 0} games, ${squadTpp.kills || 0} kills, ${squadTpp.deaths || 0} deaths`);
-        console.log(`  Squad FPP: ${squadFpp.roundsPlayed || 0} games, ${squadFpp.kills || 0} kills, ${squadFpp.deaths || 0} deaths`);
+        const tppDeaths = (squadTpp.roundsPlayed || 0) - (squadTpp.wins || 0);
+        const fppDeaths = (squadFpp.roundsPlayed || 0) - (squadFpp.wins || 0);
+        console.log(`  Squad TPP: ${squadTpp.roundsPlayed || 0} games, ${squadTpp.kills || 0} kills, ${tppDeaths} deaths (calculated)`);
+        console.log(`  Squad FPP: ${squadFpp.roundsPlayed || 0} games, ${squadFpp.kills || 0} kills, ${fppDeaths} deaths (calculated)`);
         
         // Squad TPP와 FPP 통계 합산
+        // 주의: PUBG API는 deaths를 제공하지 않음. deaths = roundsPlayed - wins로 계산
         const mainStats = {
             kills: (squadTpp.kills || 0) + (squadFpp.kills || 0),
-            deaths: (squadTpp.deaths || 0) + (squadFpp.deaths || 0),
+            deaths: ((squadTpp.roundsPlayed || 0) - (squadTpp.wins || 0)) + 
+                   ((squadFpp.roundsPlayed || 0) - (squadFpp.wins || 0)),
             assists: (squadTpp.assists || 0) + (squadFpp.assists || 0),
             damageDealt: (squadTpp.damageDealt || 0) + (squadFpp.damageDealt || 0),
             roundsPlayed: (squadTpp.roundsPlayed || 0) + (squadFpp.roundsPlayed || 0),
@@ -165,9 +169,9 @@ async function getPlayerStats(playerId, playerName) {
         const kd = mainStats.deaths > 0 ? 
             (mainStats.kills || 0) / mainStats.deaths : 0;
         
-        // KDA 계산 ((kills + assists) / roundsPlayed) - 게임당 평균 기여도
-        const kda = mainStats.roundsPlayed > 0 ? 
-            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.roundsPlayed : 0;
+        // KDA 계산 ((kills + assists) / deaths) - 전통적인 KDA 계산
+        const kda = mainStats.deaths > 0 ? 
+            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.deaths : 0;
         
         console.log(`  Calculated: K/D=${kd.toFixed(2)}, KDA=${kda.toFixed(2)}`);
         

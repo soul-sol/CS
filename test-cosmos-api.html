@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS_COSMOS PUBG API Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.8;
+        }
+        h2 { color: #00ffff; }
+        .section {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: 1px solid #00ff00;
+        }
+        .highlight { color: #ffd700; font-weight: bold; }
+        .error { color: #ff0000; }
+        .success { color: #00ff00; }
+        button {
+            background: #00ff00;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover { background: #00dd00; }
+        pre { 
+            background: #000; 
+            padding: 10px; 
+            overflow-x: auto;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 CS_COSMOS PUBG API 직접 테스트</h1>
+    
+    <button onclick="testAPI()">API 테스트 시작</button>
+    
+    <div class="section">
+        <h2>1. 플레이어 조회</h2>
+        <div id="playerInfo">대기 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>2. Lifetime 통계 (전체 모드)</h2>
+        <div id="allStats">대기 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>3. Squad 모드 분석</h2>
+        <div id="squadStats">대기 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>4. 계산 결과</h2>
+        <div id="calculations">대기 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>5. Raw API Response</h2>
+        <pre id="rawData" style="max-height: 400px; overflow-y: auto;">대기 중...</pre>
+    </div>
+
+    <script>
+        const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI4MjU3MDQyMC02OTQ4LTAxM2UtNDg5ZC00MjVkMGRiNDBlMGYiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNzU2NzIwODcwLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Ii00OTcwY2YwOS0zY2RkLTRlYTUtYjVjMy01MGVmY2VlNzExOTYifQ.JNUWXi2YT78qtXFkTHHiQtCaMIXqKTQRSWwRtimeI94';
+        const API_BASE_URL = 'https://api.pubg.com/shards/kakao';
+        
+        async function testAPI() {
+            const playerName = 'CS_COSMOS';
+            
+            try {
+                // 1. 플레이어 ID 조회
+                document.getElementById('playerInfo').innerHTML = '🔍 플레이어 검색 중...';
+                
+                const playerResponse = await fetch(
+                    `${API_BASE_URL}/players?filter[playerNames]=${encodeURIComponent(playerName)}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${API_KEY}`,
+                            'Accept': 'application/vnd.api+json'
+                        }
+                    }
+                );
+                
+                const playerData = await playerResponse.json();
+                
+                if (!playerData.data || playerData.data.length === 0) {
+                    document.getElementById('playerInfo').innerHTML = '<span class="error">플레이어를 찾을 수 없습니다</span>';
+                    return;
+                }
+                
+                const playerId = playerData.data[0].id;
+                document.getElementById('playerInfo').innerHTML = 
+                    `<span class="success">✅ 플레이어 찾음</span><br>` +
+                    `Player Name: <span class="highlight">${playerName}</span><br>` +
+                    `Player ID: ${playerId}`;
+                
+                // 2. Lifetime 통계 조회
+                document.getElementById('allStats').innerHTML = '📊 통계 조회 중...';
+                
+                const statsResponse = await fetch(
+                    `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${API_KEY}`,
+                            'Accept': 'application/vnd.api+json'
+                        }
+                    }
+                );
+                
+                const statsData = await statsResponse.json();
+                const stats = statsData.data.attributes.gameModeStats;
+                
+                // Raw 데이터 표시
+                document.getElementById('rawData').textContent = JSON.stringify(stats, null, 2);
+                
+                // 모든 모드 통계 표시
+                let allStatsHtml = '<h3>모든 게임 모드 통계:</h3>';
+                let totalKills = 0, totalDeaths = 0, totalAssists = 0, totalGames = 0, totalDamage = 0;
+                
+                for (const [mode, data] of Object.entries(stats)) {
+                    if (data && data.roundsPlayed > 0) {
+                        allStatsHtml += `<div style="margin: 10px 0;">`;
+                        allStatsHtml += `<strong>${mode}:</strong><br>`;
+                        allStatsHtml += `&nbsp;&nbsp;Games: ${data.roundsPlayed}, `;
+                        allStatsHtml += `Kills: ${data.kills}, `;
+                        allStatsHtml += `Deaths: ${data.deaths}, `;
+                        allStatsHtml += `Assists: ${data.assists}<br>`;
+                        allStatsHtml += `</div>`;
+                        
+                        // 전체 합산
+                        totalKills += data.kills || 0;
+                        totalDeaths += data.deaths || 0;
+                        totalAssists += data.assists || 0;
+                        totalGames += data.roundsPlayed || 0;
+                        totalDamage += data.damageDealt || 0;
+                    }
+                }
+                
+                allStatsHtml += `<div style="margin-top: 20px; border-top: 1px solid #00ff00; padding-top: 10px;">`;
+                allStatsHtml += `<strong class="highlight">모든 모드 합계:</strong><br>`;
+                allStatsHtml += `총 게임: ${totalGames}<br>`;
+                allStatsHtml += `총 킬: <span class="highlight">${totalKills}</span><br>`;
+                allStatsHtml += `총 데스: <span class="highlight">${totalDeaths}</span><br>`;
+                allStatsHtml += `총 어시: <span class="highlight">${totalAssists}</span><br>`;
+                allStatsHtml += `</div>`;
+                
+                document.getElementById('allStats').innerHTML = allStatsHtml;
+                
+                // 3. Squad 모드만 분석
+                const squadTpp = stats['squad'] || {};
+                const squadFpp = stats['squad-fpp'] || {};
+                
+                let squadHtml = '<h3>Squad 모드 분석:</h3>';
+                squadHtml += `<div>Squad TPP: ${squadTpp.roundsPlayed || 0} games, ${squadTpp.kills || 0} kills, ${squadTpp.deaths || 0} deaths, ${squadTpp.assists || 0} assists</div>`;
+                squadHtml += `<div>Squad FPP: ${squadFpp.roundsPlayed || 0} games, ${squadFpp.kills || 0} kills, ${squadFpp.deaths || 0} deaths, ${squadFpp.assists || 0} assists</div>`;
+                
+                const squadTotalKills = (squadTpp.kills || 0) + (squadFpp.kills || 0);
+                const squadTotalDeaths = (squadTpp.deaths || 0) + (squadFpp.deaths || 0);
+                const squadTotalAssists = (squadTpp.assists || 0) + (squadFpp.assists || 0);
+                const squadTotalGames = (squadTpp.roundsPlayed || 0) + (squadFpp.roundsPlayed || 0);
+                const squadTotalDamage = (squadTpp.damageDealt || 0) + (squadFpp.damageDealt || 0);
+                
+                squadHtml += `<div style="margin-top: 15px; border-top: 1px solid #00ff00; padding-top: 10px;">`;
+                squadHtml += `<strong class="highlight">Squad 합계:</strong><br>`;
+                squadHtml += `게임: ${squadTotalGames}<br>`;
+                squadHtml += `킬: <span class="highlight">${squadTotalKills}</span><br>`;
+                squadHtml += `데스: <span class="highlight">${squadTotalDeaths}</span><br>`;
+                squadHtml += `어시: <span class="highlight">${squadTotalAssists}</span><br>`;
+                squadHtml += `총 데미지: ${squadTotalDamage}<br>`;
+                squadHtml += `</div>`;
+                
+                document.getElementById('squadStats').innerHTML = squadHtml;
+                
+                // 4. KDA 계산
+                let calcHtml = '<h3>계산 결과:</h3>';
+                
+                // 전체 모드 기준
+                const allKD = totalDeaths > 0 ? (totalKills / totalDeaths).toFixed(2) : '0.00';
+                const allKDA = totalDeaths > 0 ? ((totalKills + totalAssists) / totalDeaths).toFixed(2) : '0.00';
+                const allKDAPerGame = totalGames > 0 ? ((totalKills + totalAssists) / totalGames).toFixed(2) : '0.00';
+                
+                calcHtml += `<div style="margin-bottom: 15px;">`;
+                calcHtml += `<strong>전체 모드 기준:</strong><br>`;
+                calcHtml += `K/D = ${totalKills} / ${totalDeaths} = <span class="highlight">${allKD}</span><br>`;
+                calcHtml += `KDA (traditional) = (${totalKills} + ${totalAssists}) / ${totalDeaths} = <span class="highlight">${allKDA}</span><br>`;
+                calcHtml += `KDA (per game) = (${totalKills} + ${totalAssists}) / ${totalGames} = <span class="highlight">${allKDAPerGame}</span><br>`;
+                calcHtml += `</div>`;
+                
+                // Squad 모드 기준
+                const squadKD = squadTotalDeaths > 0 ? (squadTotalKills / squadTotalDeaths).toFixed(2) : '0.00';
+                const squadKDA = squadTotalDeaths > 0 ? ((squadTotalKills + squadTotalAssists) / squadTotalDeaths).toFixed(2) : '0.00';
+                const squadKDAPerGame = squadTotalGames > 0 ? ((squadTotalKills + squadTotalAssists) / squadTotalGames).toFixed(2) : '0.00';
+                const squadAvgDamage = squadTotalGames > 0 ? Math.round(squadTotalDamage / squadTotalGames) : 0;
+                
+                calcHtml += `<div>`;
+                calcHtml += `<strong>Squad 모드만:</strong><br>`;
+                calcHtml += `K/D = ${squadTotalKills} / ${squadTotalDeaths} = <span class="highlight">${squadKD}</span><br>`;
+                calcHtml += `KDA (traditional) = (${squadTotalKills} + ${squadTotalAssists}) / ${squadTotalDeaths} = <span class="highlight">${squadKDA}</span><br>`;
+                calcHtml += `KDA (per game) = (${squadTotalKills} + ${squadTotalAssists}) / ${squadTotalGames} = <span class="highlight">${squadKDAPerGame}</span><br>`;
+                calcHtml += `평균 데미지 = ${squadTotalDamage} / ${squadTotalGames} = <span class="highlight">${squadAvgDamage}</span><br>`;
+                calcHtml += `</div>`;
+                
+                calcHtml += `<div style="margin-top: 20px; padding: 10px; background: #333; border-radius: 5px;">`;
+                calcHtml += `<strong>🎯 예상값 vs 실제값:</strong><br>`;
+                calcHtml += `예상: 685킬, 312어시, 591데스<br>`;
+                calcHtml += `실제 (Squad): ${squadTotalKills}킬, ${squadTotalAssists}어시, ${squadTotalDeaths}데스<br>`;
+                calcHtml += `실제 (전체): ${totalKills}킬, ${totalAssists}어시, ${totalDeaths}데스<br>`;
+                calcHtml += `</div>`;
+                
+                document.getElementById('calculations').innerHTML = calcHtml;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('playerInfo').innerHTML = 
+                    `<span class="error">에러 발생: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
