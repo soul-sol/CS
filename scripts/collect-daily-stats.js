@@ -77,131 +77,88 @@ async function getCurrentSeason() {
         );
         
         const currentSeason = response.data.data.find(s => s.attributes.isCurrentSeason);
-        return currentSeason ? currentSeason.id : null;
+        if (currentSeason) {
+            console.log(`Current season found: ${currentSeason.id}`);
+            return currentSeason.id;
+        }
+        console.log('No current season found');
+        return null;
     } catch (error) {
         console.error('Failed to get current season:', error.message);
         return null;
     }
 }
 
-// 플레이어 통계 가져오기
+// 플레이어 통계 가져오기 (랭크 통계만)
 async function getPlayerStats(playerId, playerName) {
     try {
-        // 1. Lifetime 통계 가져오기
-        await waitForRateLimit(); // Rate limit 대기
+        const currentSeasonId = await getCurrentSeason();
+        if (!currentSeasonId) {
+            console.log(`  No current season found for ${playerName}`);
+            return null;
+        }
+        
+        await waitForRateLimit();
         const response = await axios.get(
-            `${API_BASE_URL}/players/${playerId}/seasons/lifetime`,
+            `${API_BASE_URL}/players/${playerId}/seasons/${currentSeasonId}/ranked`,
             { headers }
         );
         
-        const stats = response.data.data.attributes.gameModeStats;
+        const rankedStats = response.data.data.attributes.rankedGameModeStats;
+        const squadRanked = rankedStats?.squad || {};
         
-        // Squad 모드만 수집 (TPP + FPP 합산)
-        const squadTpp = stats['squad'] || {};
-        const squadFpp = stats['squad-fpp'] || {};
-        
-        // 디버그: 원본 데이터 확인
-        const tppDeaths = (squadTpp.roundsPlayed || 0) - (squadTpp.wins || 0);
-        const fppDeaths = (squadFpp.roundsPlayed || 0) - (squadFpp.wins || 0);
-        console.log(`  Squad TPP: ${squadTpp.roundsPlayed || 0} games, ${squadTpp.kills || 0} kills, ${tppDeaths} deaths (calculated)`);
-        console.log(`  Squad FPP: ${squadFpp.roundsPlayed || 0} games, ${squadFpp.kills || 0} kills, ${fppDeaths} deaths (calculated)`);
-        
-        // Squad TPP와 FPP 통계 합산
-        // 주의: PUBG API는 deaths를 제공하지 않음. deaths = roundsPlayed - wins로 계산
-        const mainStats = {
-            kills: (squadTpp.kills || 0) + (squadFpp.kills || 0),
-            deaths: ((squadTpp.roundsPlayed || 0) - (squadTpp.wins || 0)) + 
-                   ((squadFpp.roundsPlayed || 0) - (squadFpp.wins || 0)),
-            assists: (squadTpp.assists || 0) + (squadFpp.assists || 0),
-            damageDealt: (squadTpp.damageDealt || 0) + (squadFpp.damageDealt || 0),
-            roundsPlayed: (squadTpp.roundsPlayed || 0) + (squadFpp.roundsPlayed || 0),
-            wins: (squadTpp.wins || 0) + (squadFpp.wins || 0),
-            top10s: (squadTpp.top10s || 0) + (squadFpp.top10s || 0),
-            headshotKills: (squadTpp.headshotKills || 0) + (squadFpp.headshotKills || 0),
-            longestKill: Math.max(squadTpp.longestKill || 0, squadFpp.longestKill || 0),
-            dBNOs: (squadTpp.dBNOs || 0) + (squadFpp.dBNOs || 0),
-            revives: (squadTpp.revives || 0) + (squadFpp.revives || 0),
-            teamKills: (squadTpp.teamKills || 0) + (squadFpp.teamKills || 0),
-            timeSurvived: (squadTpp.timeSurvived || 0) + (squadFpp.timeSurvived || 0),
-            walkDistance: (squadTpp.walkDistance || 0) + (squadFpp.walkDistance || 0),
-            rideDistance: (squadTpp.rideDistance || 0) + (squadFpp.rideDistance || 0),
-            swimDistance: (squadTpp.swimDistance || 0) + (squadFpp.swimDistance || 0)
-        };
-        
-        // 2. 현재 시즌 랭크 통계 가져오기 (티어 정보)
-        let tier = null;
-        let rankedKda = '0.0';
-        let rankedAvgDamage = 0;
-        
-        const currentSeasonId = await getCurrentSeason();
-        if (currentSeasonId) {
-            try {
-                await waitForRateLimit();
-                const rankedResponse = await axios.get(
-                    `${API_BASE_URL}/players/${playerId}/seasons/${currentSeasonId}/ranked`,
-                    { headers }
-                );
-                
-                const rankedStats = rankedResponse.data.data.attributes.rankedGameModeStats;
-                const squadRanked = rankedStats?.squad || {};
-                
-                if (squadRanked.roundsPlayed && squadRanked.roundsPlayed > 0) {
-                    // 티어 정보 추출
-                    if (squadRanked.currentTier) {
-                        const tierName = squadRanked.currentTier.tier.charAt(0).toUpperCase() + 
-                                       squadRanked.currentTier.tier.slice(1).toLowerCase();
-                        tier = `${tierName} ${squadRanked.currentTier.subTier}`;
-                    }
-                    
-                    rankedKda = squadRanked.kda ? squadRanked.kda.toFixed(2) : '0.0';
-                    rankedAvgDamage = squadRanked.damageDealt && squadRanked.roundsPlayed ? 
-                        Math.round(squadRanked.damageDealt / squadRanked.roundsPlayed) : 0;
-                }
-            } catch (rankedError) {
-                console.log(`  Ranked stats not available for ${playerName}`);
-            }
+        if (!squadRanked.roundsPlayed || squadRanked.roundsPlayed === 0) {
+            console.log(`  No ranked games played for ${playerName}`);
+            return null;
         }
         
-        // 디버그: 합산된 통계 확인
-        console.log(`  Total: ${mainStats.roundsPlayed} games, ${mainStats.kills} kills, ${mainStats.deaths} deaths, ${mainStats.assists} assists`);
+        // 티어 정보 추출
+        let tier = null;
+        let subTier = null;
+        if (squadRanked.currentTier) {
+            tier = squadRanked.currentTier.tier;
+            subTier = squadRanked.currentTier.subTier;
+        }
         
-        // K/D 계산 (kills / deaths)
-        const kd = mainStats.deaths > 0 ? 
-            (mainStats.kills || 0) / mainStats.deaths : 0;
+        // 평균 데미지 계산
+        const avgDamage = squadRanked.damageDealt && squadRanked.roundsPlayed ? 
+            Math.round(squadRanked.damageDealt / squadRanked.roundsPlayed) : 0;
         
-        // KDA 계산 ((kills + assists) / deaths) - 전통적인 KDA 계산
-        const kda = mainStats.deaths > 0 ? 
-            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.deaths : 0;
+        // K/D 계산
+        const kd = squadRanked.deaths > 0 ? 
+            (squadRanked.kills / squadRanked.deaths) : 0;
         
-        console.log(`  Calculated: K/D=${kd.toFixed(2)}, KDA=${kda.toFixed(2)}`);
+        console.log(`  ${playerName} Ranked Stats:`);
+        console.log(`    Tier: ${tier} ${subTier}`);
+        console.log(`    KDA: ${squadRanked.kda?.toFixed(2) || '0.00'}`);
+        console.log(`    K/D: ${kd.toFixed(2)}`);
+        console.log(`    Avg DMG: ${avgDamage}`);
+        console.log(`    Games: ${squadRanked.roundsPlayed}`);
         
         return {
-            // 일반 통계
-            kills: mainStats.kills || 0,
-            deaths: mainStats.deaths || 0,
-            kd: kd.toFixed(2),
-            kda: kda.toFixed(2),
-            avgDamage: mainStats.damageDealt && mainStats.roundsPlayed ? 
-                Math.round(mainStats.damageDealt / mainStats.roundsPlayed) : 0,
-            wins: mainStats.wins || 0,
-            top10s: mainStats.top10s || 0,
-            roundsPlayed: mainStats.roundsPlayed || 0,
-            winRate: mainStats.wins && mainStats.roundsPlayed ? 
-                ((mainStats.wins / mainStats.roundsPlayed) * 100).toFixed(2) : '0.00',
-            headshotKills: mainStats.headshotKills || 0,
-            longestKill: Math.round(mainStats.longestKill || 0),
-            assists: mainStats.assists || 0,
-            dBNOs: mainStats.dBNOs || 0,
-            revives: mainStats.revives || 0,
-            teamKills: mainStats.teamKills || 0,
-            timeSurvived: mainStats.timeSurvived || 0,
-            walkDistance: Math.round(mainStats.walkDistance || 0),
-            rideDistance: Math.round(mainStats.rideDistance || 0),
-            swimDistance: Math.round(mainStats.swimDistance || 0),
-            // 랭크 통계
+            // 랭크 통계만 저장
             tier: tier,
-            rankedKda: rankedKda,
-            rankedAvgDamage: rankedAvgDamage
+            subTier: subTier,
+            kda: squadRanked.kda?.toFixed(2) || '0.00',
+            kd: kd.toFixed(2),
+            avgDamage: avgDamage,
+            kills: squadRanked.kills || 0,
+            assists: squadRanked.assists || 0,
+            deaths: squadRanked.deaths || 0,
+            roundsPlayed: squadRanked.roundsPlayed || 0,
+            wins: squadRanked.wins || 0,
+            winRate: squadRanked.winRatio ? (squadRanked.winRatio * 100).toFixed(2) : '0.00',
+            top10Ratio: squadRanked.top10Ratio ? (squadRanked.top10Ratio * 100).toFixed(2) : '0.00',
+            avgRank: squadRanked.avgRank?.toFixed(1) || '0.0',
+            damageDealt: Math.round(squadRanked.damageDealt || 0),
+            dBNOs: squadRanked.dBNOs || 0,
+            headshotKills: squadRanked.headshotKills || 0,
+            longestKill: Math.round(squadRanked.longestKill || 0),
+            revives: squadRanked.revives || 0,
+            heals: squadRanked.heals || 0,
+            boosts: squadRanked.boosts || 0,
+            currentRankPoint: squadRanked.currentRankPoint || 0,
+            bestRankPoint: squadRanked.bestRankPoint || 0
         };
     } catch (error) {
         console.error(`Error fetching stats for player ID ${playerId}:`, error.message);
@@ -253,7 +210,8 @@ async function collectDailyStats() {
                 timestamp: Date.now()
             };
             
-            console.log(`✓ ${playerName}: K/D ${stats.kd}, KDA ${stats.kda}, Avg Damage ${stats.avgDamage}, Tier: ${stats.tier || 'Unranked'}`);
+            const tierDisplay = stats.tier ? `${stats.tier} ${stats.subTier}` : 'Unranked';
+            console.log(`✓ ${playerName}: Tier: ${tierDisplay}, KDA: ${stats.kda}, K/D: ${stats.kd}, Avg DMG: ${stats.avgDamage}, Games: ${stats.roundsPlayed}`);
         }
         
         // Firebase에 저장
@@ -267,15 +225,20 @@ async function collectDailyStats() {
             
             // 3. 멤버별 히스토리에 추가 (최대 30일 보관)
             await db.ref(`stats/history/${memberKey}/${today}`).set({
+                tier: data.stats.tier,
+                subTier: data.stats.subTier,
+                kda: data.stats.kda,
                 kd: data.stats.kd,
-                kda: data.stats.kda,  // KDA 추가
                 avgDamage: data.stats.avgDamage,
                 kills: data.stats.kills,
-                wins: data.stats.wins,
+                assists: data.stats.assists,
+                deaths: data.stats.deaths,
                 roundsPlayed: data.stats.roundsPlayed,
-                tier: data.stats.tier,  // 티어 정보 추가
-                rankedKda: data.stats.rankedKda,  // 랭크 KDA 추가
-                rankedAvgDamage: data.stats.rankedAvgDamage,  // 랭크 평균 데미지 추가
+                wins: data.stats.wins,
+                winRate: data.stats.winRate,
+                top10Ratio: data.stats.top10Ratio,
+                avgRank: data.stats.avgRank,
+                currentRankPoint: data.stats.currentRankPoint,
                 timestamp: data.timestamp
             });
         }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>빠른 테스트</title>
+</head>
+<body>
+    <h1>멤버 상태 변경 테스트</h1>
+    <button onclick="testUpdate()">테스트 클릭</button>
+    <div id="result"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWEWmussrZcqv4LgCvjUdcuzRcaUST3Ls",
+            authDomain: "cs-homepage-5c3c2.firebaseapp.com",
+            databaseURL: "https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cs-homepage-5c3c2",
+            storageBucket: "cs-homepage-5c3c2.firebasestorage.app",
+            messagingSenderId: "117726976721",
+            appId: "1:117726976721:web:f9dd3297e82113414183f0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        auth.signInAnonymously().then(() => {
+            document.getElementById('result').innerHTML = '✅ 익명 인증 성공!<br>';
+        }).catch(e => {
+            document.getElementById('result').innerHTML = '❌ 인증 실패: ' + e.message + '<br>';
+        });
+
+        async function testUpdate() {
+            try {
+                // 첫 번째 멤버 가져오기
+                const snapshot = await db.ref('members').once('value');
+                const members = snapshot.val();
+                const firstId = Object.keys(members)[0];
+                const member = members[firstId];
+                
+                // 상태 변경
+                const newStatus = member.status === 'online' ? 'offline' : 'online';
+                await db.ref(`members/${firstId}/status`).set(newStatus);
+                
+                document.getElementById('result').innerHTML += 
+                    `✅ ${member.name}의 상태를 ${newStatus}로 변경 성공!`;
+            } catch (error) {
+                document.getElementById('result').innerHTML += 
+                    `❌ 오류: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

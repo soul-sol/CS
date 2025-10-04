@@ -50,11 +50,11 @@ async function testPlayer(playerName) {
         const squadFpp = stats['squad-fpp'] || {};
         
         console.log('\n   Squad Analysis:');
-        console.log(`   Squad TPP: ${squadTpp.roundsPlayed || 0} games, ${squadTpp.kills || 0} kills, ${squadTpp.deaths || 0} deaths`);
-        console.log(`   Squad FPP: ${squadFpp.roundsPlayed || 0} games, ${squadFpp.kills || 0} kills, ${squadFpp.deaths || 0} deaths`);
+        console.log(`   Squad TPP: ${squadTpp.roundsPlayed || 0} games, ${squadTpp.kills || 0} kills, ${squadTpp.losses || 0} losses`);
+        console.log(`   Squad FPP: ${squadFpp.roundsPlayed || 0} games, ${squadFpp.kills || 0} kills, ${squadFpp.losses || 0} losses`);
         
         const totalKills = (squadTpp.kills || 0) + (squadFpp.kills || 0);
-        const totalDeaths = (squadTpp.deaths || 0) + (squadFpp.deaths || 0);
+        const totalDeaths = (squadTpp.losses || 0) + (squadFpp.losses || 0);
         const totalAssists = (squadTpp.assists || 0) + (squadFpp.assists || 0);
         const totalGames = (squadTpp.roundsPlayed || 0) + (squadFpp.roundsPlayed || 0);
         const totalDamage = (squadTpp.damageDealt || 0) + (squadFpp.damageDealt || 0);

@@ -98,6 +98,35 @@
                     <div class="stat-change" id="top10Change"></div>
                 </div>
             </div>
+            
+            <!-- 랭크 통계 섹션 추가 -->
+            <h3 class="summary-title" style="margin-top: 2rem;">랭크 통계</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">티어</div>
+                    <div class="stat-value" id="currentTier">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">랭크 KDA</div>
+                    <div class="stat-value" id="currentRankedKDA">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">랭크 평균 데미지</div>
+                    <div class="stat-value" id="currentRankedDamage">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">랭크 킬</div>
+                    <div class="stat-value" id="currentRankedKills">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">랭크 어시스트</div>
+                    <div class="stat-value" id="currentRankedAssists">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">랭크 게임 수</div>
+                    <div class="stat-value" id="currentRankedGames">-</div>
+                </div>
+            </div>
         </div>
 
         <!-- 차트 컨테이너 -->
@@ -132,6 +161,18 @@
                 <div class="ranking-card">
                     <h3>👑 승리 TOP 5</h3>
                     <ol id="winsRanking" class="ranking-list">
+                        <li>데이터 로딩 중...</li>
+                    </ol>
+                </div>
+                <div class="ranking-card">
+                    <h3>🎖️ 티어 TOP 5</h3>
+                    <ol id="tierRanking" class="ranking-list">
+                        <li>데이터 로딩 중...</li>
+                    </ol>
+                </div>
+                <div class="ranking-card">
+                    <h3>⚔️ 랭크 KDA TOP 5</h3>
+                    <ol id="rankedKdaRanking" class="ranking-list">
                         <li>데이터 로딩 중...</li>
                     </ol>
                 </div>

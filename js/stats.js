@@ -168,7 +168,29 @@ function updateMemberStats() {
         document.getElementById('currentWinRate').textContent = 
             currentStats.winRate ? currentStats.winRate + '%' : '0%';
         document.getElementById('currentGames').textContent = currentStats.roundsPlayed || '0';
-        document.getElementById('currentTop10').textContent = currentStats.top10s || '0';
+        document.getElementById('currentTop10').textContent = currentStats.top10Ratio ? currentStats.top10Ratio + '%' : '0%';
+        
+        // 랭크 통계 표시
+        if (currentStats.tier && currentStats.subTier) {
+            const tierDisplay = `${currentStats.tier} ${currentStats.subTier}`;
+            document.getElementById('currentTier').textContent = tierDisplay;
+            
+            // 티어에 따른 색상 적용
+            const tierElement = document.getElementById('currentTier');
+            const tierColor = getTierColor(currentStats.tier);
+            if (tierColor) {
+                tierElement.style.color = tierColor;
+                tierElement.style.fontWeight = 'bold';
+            }
+        } else {
+            document.getElementById('currentTier').textContent = 'Unranked';
+        }
+        
+        document.getElementById('currentRankedKDA').textContent = currentStats.kda || '0.00';
+        document.getElementById('currentRankedDamage').textContent = currentStats.avgDamage || '0';
+        document.getElementById('currentRankedKills').textContent = currentStats.kills || '0';
+        document.getElementById('currentRankedAssists').textContent = currentStats.assists || '0';
+        document.getElementById('currentRankedGames').textContent = currentStats.roundsPlayed || '0';
     }
     
     // 변화량 계산 (이전 데이터와 비교)
@@ -464,8 +486,13 @@ function updateClanRankings() {
         kd: [],
         damage: [],
         kills: [],
-        wins: []
+        wins: [],
+        tier: [],
+        rankedKda: []
     };
+    
+    // 티어 순서 정의 (높은 순)
+    const tierOrder = ['Grandmaster', 'Master', 'Diamond', 'Platinum', 'Gold', 'Silver', 'Bronze'];
     
     // 각 멤버의 현재 통계 수집
     Object.entries(members).forEach(([key, member]) => {
@@ -479,6 +506,26 @@ function updateClanRankings() {
             rankings.damage.push({ name: member.name, value: stats.avgDamage || 0 });
             rankings.kills.push({ name: member.name, value: stats.kills || 0 });
             rankings.wins.push({ name: member.name, value: stats.wins || 0 });
+            
+            // 티어 랭킹
+            if (stats.tier && stats.subTier) {
+                const tierIndex = tierOrder.indexOf(stats.tier);
+                const tierValue = tierIndex >= 0 ? (7 - tierIndex) * 10 + parseInt(stats.subTier) : 0;
+                rankings.tier.push({ 
+                    name: member.name, 
+                    value: tierValue,
+                    display: `${stats.tier} ${stats.subTier}`,
+                    tier: stats.tier
+                });
+            }
+            
+            // 랭크 KDA 랭킹 (kda 필드 사용)
+            if (stats.kda) {
+                rankings.rankedKda.push({ 
+                    name: member.name, 
+                    value: parseFloat(stats.kda) || 0 
+                });
+            }
         }
     });
     
@@ -488,9 +535,11 @@ function updateClanRankings() {
         displayRanking('damageRanking', rankings.damage.sort((a, b) => b.value - a.value), 'damage');
         displayRanking('killsRanking', rankings.kills.sort((a, b) => b.value - a.value), 'kills');
         displayRanking('winsRanking', rankings.wins.sort((a, b) => b.value - a.value), 'wins');
+        displayTierRanking('tierRanking', rankings.tier.sort((a, b) => b.value - a.value));
+        displayRanking('rankedKdaRanking', rankings.rankedKda.sort((a, b) => b.value - a.value), 'rankedKda');
     } else {
         // 데이터가 없을 때 안내 메시지 표시
-        ['kdRanking', 'damageRanking', 'killsRanking', 'winsRanking'].forEach(id => {
+        ['kdRanking', 'damageRanking', 'killsRanking', 'winsRanking', 'tierRanking', 'rankedKdaRanking'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 element.innerHTML = '<li style="color: rgba(255,255,255,0.5); text-align: center;">데이터 수집 대기 중...</li>';
@@ -514,13 +563,37 @@ function displayRanking(elementId, data, type) {
         else if (index === 2) medal = '🥉 ';
         
         let valueDisplay = item.value;
-        if (type === 'kd') {
+        if (type === 'kd' || type === 'rankedKda') {
             valueDisplay = item.value.toFixed(2);
         }
         
         li.innerHTML = `
             <span class="rank-name">${medal}${item.name}</span>
             <span class="rank-value">${valueDisplay}</span>
+        `;
+        element.appendChild(li);
+    });
+}
+
+// 티어 랭킹 표시 (특별 처리)
+function displayTierRanking(elementId, data) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    element.innerHTML = '';
+    
+    data.slice(0, 5).forEach((item, index) => {
+        const li = document.createElement('li');
+        let medal = '';
+        if (index === 0) medal = '🥇 ';
+        else if (index === 1) medal = '🥈 ';
+        else if (index === 2) medal = '🥉 ';
+        
+        const tierColor = getTierColor(item.tier);
+        
+        li.innerHTML = `
+            <span class="rank-name">${medal}${item.name}</span>
+            <span class="rank-value" style="color: ${tierColor}; font-weight: bold;">${item.display}</span>
         `;
         element.appendChild(li);
     });
@@ -535,6 +608,23 @@ function formatDate(dateString) {
 function formatChartDate(dateString) {
     const date = new Date(dateString);
     return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+// 티어별 색상 반환
+function getTierColor(tier) {
+    if (!tier) return null;
+    
+    const tierColors = {
+        'Bronze': '#cd7f32',
+        'Silver': '#c0c0c0',
+        'Gold': '#ffd700',
+        'Platinum': '#e5e4e2',
+        'Diamond': '#b9f2ff',
+        'Master': '#ff4444',
+        'Grandmaster': '#ff00ff'
+    };
+    
+    return tierColors[tier] || '#ffffff';
 }
 
 function showLoading(show) {
