@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 통계 데이터 확인</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 { color: #00ffff; }
+        h2 { color: #ffff00; margin-top: 30px; }
+        .section {
+            background: #1a1a1a;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .member-data {
+            background: #2a2a2a;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00ffff;
+        }
+        .tier { color: #ffd700; font-weight: bold; }
+        .kda { color: #ff69b4; }
+        .damage { color: #87ceeb; }
+        .error { color: #ff0000; }
+        .success { color: #00ff00; }
+        .path { color: #999; font-size: 0.9em; }
+        pre { 
+            background: #000; 
+            padding: 10px; 
+            overflow-x: auto;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Firebase 통계 데이터 실시간 조회</h1>
+    
+    <div class="section">
+        <h2>1️⃣ 멤버별 현재 통계 (currentStats)</h2>
+        <div class="path">경로: members/{memberKey}/currentStats/</div>
+        <div id="currentStats">로딩 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>2️⃣ 오늘의 일일 스냅샷 (daily)</h2>
+        <div class="path">경로: stats/daily/{today}/</div>
+        <div id="dailyStats">로딩 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>3️⃣ 멤버별 히스토리 (history)</h2>
+        <div class="path">경로: stats/history/{memberKey}/{date}/</div>
+        <div id="historyStats">로딩 중...</div>
+    </div>
+    
+    <div class="section">
+        <h2>4️⃣ 마지막 수집 정보 (metadata)</h2>
+        <div class="path">경로: stats/metadata/lastCollection/</div>
+        <div id="metadata">로딩 중...</div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWEWmussrZcqv4LgCvjUdcuzRcaUST3Ls",
+            authDomain: "cs-homepage-5c3c2.firebaseapp.com",
+            databaseURL: "https://cs-homepage-5c3c2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cs-homepage-5c3c2",
+            storageBucket: "cs-homepage-5c3c2.firebasestorage.app",
+            messagingSenderId: "117726976721",
+            appId: "1:117726976721:web:f9dd3297e82113414183f0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // 1. 멤버별 현재 통계 조회
+        async function checkCurrentStats() {
+            const membersRef = ref(database, 'members');
+            const snapshot = await get(membersRef);
+            const members = snapshot.val() || {};
+            
+            let html = '';
+            let memberCount = 0;
+            let tierCount = 0;
+            
+            for (const [key, member] of Object.entries(members)) {
+                memberCount++;
+                const stats = member.currentStats || {};
+                const hasTier = stats.tier ? true : false;
+                if (hasTier) tierCount++;
+                
+                html += `
+                    <div class="member-data">
+                        <strong>${member.name}</strong> (${key})
+                        <br>📊 일반: KD ${stats.kd || 'N/A'}, 평균뎀 ${stats.avgDamage || 'N/A'}
+                        <br>🎮 랭크: <span class="tier">티어 ${stats.tier || '없음'}</span>, 
+                        <span class="kda">KDA ${stats.rankedKda || 'N/A'}</span>, 
+                        <span class="damage">평균뎀 ${stats.rankedAvgDamage || 'N/A'}</span>
+                        ${!hasTier ? '<br><span class="error">⚠️ 티어 정보 없음</span>' : ''}
+                    </div>
+                `;
+            }
+            
+            document.getElementById('currentStats').innerHTML = 
+                `<div class="success">✅ 총 ${memberCount}명 중 ${tierCount}명 티어 정보 있음</div>` + html;
+        }
+        
+        // 2. 일일 스냅샷 조회
+        async function checkDailyStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const dailyRef = ref(database, `stats/daily/${today}`);
+            const snapshot = await get(dailyRef);
+            const data = snapshot.val();
+            
+            if (data) {
+                let html = `<div class="success">✅ 오늘(${today}) 데이터 있음</div>`;
+                html += `<pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>`;
+                document.getElementById('dailyStats').innerHTML = html;
+            } else {
+                // 가장 최근 날짜 찾기
+                const allDailyRef = ref(database, 'stats/daily');
+                const allSnapshot = await get(allDailyRef);
+                const allData = allSnapshot.val() || {};
+                const dates = Object.keys(allData).sort().reverse();
+                
+                if (dates.length > 0) {
+                    const latestDate = dates[0];
+                    const latestData = allData[latestDate];
+                    let html = `<div class="error">❌ 오늘 데이터 없음</div>`;
+                    html += `<div class="success">최근 수집: ${latestDate}</div>`;
+                    
+                    // 티어 정보가 있는 멤버 수 계산
+                    let tierCount = 0;
+                    for (const member of Object.values(latestData)) {
+                        if (member.stats && member.stats.tier) tierCount++;
+                    }
+                    
+                    html += `<div>티어 정보가 있는 멤버: ${tierCount}명</div>`;
+                    html += `<pre>${JSON.stringify(latestData, null, 2).substring(0, 500)}...</pre>`;
+                    document.getElementById('dailyStats').innerHTML = html;
+                } else {
+                    document.getElementById('dailyStats').innerHTML = 
+                        '<div class="error">❌ 일일 데이터가 전혀 없음 (GitHub Actions 실행 필요)</div>';
+                }
+            }
+        }
+        
+        // 3. 히스토리 조회
+        async function checkHistoryStats() {
+            const historyRef = ref(database, 'stats/history');
+            const snapshot = await get(historyRef);
+            const history = snapshot.val() || {};
+            
+            let html = '';
+            let totalDates = new Set();
+            
+            for (const [memberKey, dates] of Object.entries(history)) {
+                const dateKeys = Object.keys(dates);
+                dateKeys.forEach(d => totalDates.add(d));
+                
+                const latestDate = dateKeys.sort().pop();
+                const latestData = dates[latestDate];
+                
+                html += `
+                    <div class="member-data">
+                        <strong>${memberKey}</strong>
+                        <br>📅 ${dateKeys.length}일 데이터 보유
+                        <br>최근: ${latestDate}
+                        <br>티어: <span class="tier">${latestData.tier || '없음'}</span>
+                        <br>KD: ${latestData.kd}, 평균뎀: ${latestData.avgDamage}
+                    </div>
+                `;
+            }
+            
+            const datesArray = Array.from(totalDates).sort();
+            document.getElementById('historyStats').innerHTML = 
+                `<div class="success">✅ ${Object.keys(history).length}명의 히스토리</div>
+                 <div>수집된 날짜: ${datesArray.join(', ')}</div>` + html;
+        }
+        
+        // 4. 메타데이터 조회
+        async function checkMetadata() {
+            const metaRef = ref(database, 'stats/metadata/lastCollection');
+            const snapshot = await get(metaRef);
+            const meta = snapshot.val();
+            
+            if (meta) {
+                const date = new Date(meta.timestamp);
+                const html = `
+                    <div class="${meta.success ? 'success' : 'error'}">
+                        ${meta.success ? '✅ 마지막 수집 성공' : '❌ 마지막 수집 실패'}
+                    </div>
+                    <div>날짜: ${meta.date}</div>
+                    <div>시간: ${date.toLocaleString('ko-KR')}</div>
+                    <div>처리된 멤버: ${meta.membersProcessed || 0}명</div>
+                    ${meta.errors && meta.errors.length > 0 ? 
+                        `<div class="error">에러: ${meta.errors.length}개</div>` : ''}
+                `;
+                document.getElementById('metadata').innerHTML = html;
+            } else {
+                document.getElementById('metadata').innerHTML = 
+                    '<div class="error">❌ 수집 기록 없음</div>';
+            }
+        }
+        
+        // 실행
+        checkCurrentStats();
+        checkDailyStats();
+        checkHistoryStats();
+        checkMetadata();
+        
+        // 10초마다 자동 새로고침
+        setInterval(() => {
+            console.log('데이터 새로고침...');
+            checkCurrentStats();
+            checkDailyStats();
+            checkHistoryStats();
+            checkMetadata();
+        }, 10000);
+    </script>
+</body>
+</html>
