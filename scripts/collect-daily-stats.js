@@ -141,16 +141,20 @@ async function getPlayerStats(playerId, playerName) {
             }
         }
         
-        // KDA 계산 (kills + assists / deaths)
+        // K/D 계산 (kills / deaths)
+        const kd = mainStats.deaths > 0 ? 
+            (mainStats.kills || 0) / mainStats.deaths : 0;
+        
+        // KDA 계산 ((kills + assists) / deaths)
         const kda = mainStats.deaths > 0 ? 
-            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.deaths :
-            (mainStats.kills || 0) + (mainStats.assists || 0);
+            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.deaths : 0;
         
         return {
             // 일반 통계
             kills: mainStats.kills || 0,
             deaths: mainStats.deaths || 0,
-            kd: kda.toFixed(2),
+            kd: kd.toFixed(2),
+            kda: kda.toFixed(2),
             avgDamage: mainStats.damageDealt && mainStats.roundsPlayed ? 
                 Math.round(mainStats.damageDealt / mainStats.roundsPlayed) : 0,
             wins: mainStats.wins || 0,
@@ -223,7 +227,7 @@ async function collectDailyStats() {
                 timestamp: Date.now()
             };
             
-            console.log(`✓ ${playerName}: KD ${stats.kd}, Avg Damage ${stats.avgDamage}, Tier: ${stats.tier || 'Unranked'}`);
+            console.log(`✓ ${playerName}: K/D ${stats.kd}, KDA ${stats.kda}, Avg Damage ${stats.avgDamage}, Tier: ${stats.tier || 'Unranked'}`);
         }
         
         // Firebase에 저장
@@ -238,6 +242,7 @@ async function collectDailyStats() {
             // 3. 멤버별 히스토리에 추가 (최대 30일 보관)
             await db.ref(`stats/history/${memberKey}/${today}`).set({
                 kd: data.stats.kd,
+                kda: data.stats.kda,  // KDA 추가
                 avgDamage: data.stats.avgDamage,
                 kills: data.stats.kills,
                 wins: data.stats.wins,
