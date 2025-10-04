@@ -17,16 +17,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.firebase && window.firebase.database) {
             const database = firebase.database();
             
-            database.ref('members').on('value', (snapshot) => {
-                console.log('Firebase data received:', snapshot.val());
-                members = snapshot.val() || {};
-                updateMemberDisplay();
-                updateStatusCounts();
+            // 연결 상태 확인
+            database.ref('.info/connected').on('value', (snapshot) => {
+                const connected = snapshot.val();
+                console.log('Firebase connection status:', connected ? 'Connected' : 'Disconnected');
+                if (!connected) {
+                    showMessage('Firebase 연결이 끊어졌습니다. 인터넷 연결을 확인하세요.', 'error');
+                }
             });
             
-            console.log('Firebase listener set up');
+            // 멤버 데이터 리스너
+            database.ref('members').on('value', 
+                (snapshot) => {
+                    console.log('Firebase data received:', snapshot.val());
+                    members = snapshot.val() || {};
+                    updateMemberDisplay();
+                    updateStatusCounts();
+                },
+                (error) => {
+                    console.error('Firebase read error:', error);
+                    if (error.code === 'PERMISSION_DENIED') {
+                        showMessage('Firebase 읽기 권한이 거부되었습니다.', 'error');
+                    } else {
+                        showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
+                    }
+                }
+            );
+            
+            console.log('Firebase listener set up successfully');
         } else {
             console.error('Firebase not available');
+            showMessage('Firebase 초기화에 실패했습니다. 페이지를 새로고침하세요.', 'error');
         }
     }, 1000);
     
@@ -114,20 +135,57 @@ function updateStatusCounts() {
 
 // 상태 토글 함수
 async function toggleStatus(memberId) {
-    const member = members[memberId];
-    if (!member) return;
+    console.log('toggleStatus called with memberId:', memberId);
     
-    const newStatus = member.status === 'online' ? 'offline' : 'online';
+    const member = members[memberId];
+    if (!member) {
+        console.error('Member not found:', memberId);
+        showMessage('멤버를 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    const currentStatus = member.status || 'online';
+    const newStatus = currentStatus === 'online' ? 'offline' : 'online';
+    
+    console.log(`Attempting to update ${member.name} status from ${currentStatus} to ${newStatus}`);
     
     try {
+        // Firebase 연결 확인
+        if (!firebase || !firebase.database) {
+            throw new Error('Firebase가 초기화되지 않았습니다.');
+        }
+        
         const database = firebase.database();
         const updates = {};
         updates[`members/${memberId}/status`] = newStatus;
+        
+        console.log('Sending update to Firebase:', updates);
+        
         await database.ref().update(updates);
-        console.log(`Status updated for ${member.name}: ${newStatus}`);
+        
+        console.log(`✓ Status successfully updated for ${member.name}: ${newStatus}`);
+        showMessage(`${member.name}님의 상태가 ${newStatus === 'online' ? '온라인' : '오프라인'}으로 변경되었습니다.`, 'success');
+        
     } catch (error) {
-        console.error('Error updating status:', error);
-        showMessage('상태 업데이트 중 오류가 발생했습니다.', 'error');
+        console.error('❌ Error updating status:', error);
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            stack: error.stack
+        });
+        
+        // 더 구체적인 오류 메시지
+        let errorMessage = '상태 업데이트 중 오류가 발생했습니다.';
+        
+        if (error.code === 'PERMISSION_DENIED') {
+            errorMessage = 'Firebase 권한이 거부되었습니다. 보안 규칙을 확인하세요.';
+        } else if (error.message && error.message.includes('network')) {
+            errorMessage = '네트워크 연결을 확인하세요.';
+        } else if (error.message) {
+            errorMessage = `오류: ${error.message}`;
+        }
+        
+        showMessage(errorMessage, 'error');
     }
 }
 

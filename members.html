@@ -83,6 +83,7 @@
     <!-- Firebase SDK - compat 버전 사용 -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
     <script>
         // Firebase 설정 - index.html과 동일
@@ -100,6 +101,26 @@
         // Firebase 초기화
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
+        
+        // 익명 인증으로 자동 로그인
+        auth.signInAnonymously()
+            .then(() => {
+                console.log('익명 인증 성공');
+            })
+            .catch((error) => {
+                console.error('익명 인증 실패:', error);
+                // 인증 실패해도 계속 진행 (읽기는 가능)
+            });
+        
+        // 인증 상태 리스너
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('인증됨 - UID:', user.uid);
+            } else {
+                console.log('인증되지 않음');
+            }
+        });
         
         // Firebase를 전역으로 사용 가능하게 설정
         window.firebaseDB = {

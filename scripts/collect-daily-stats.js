@@ -34,7 +34,7 @@ const headers = {
 
 // Rate limiting을 위한 변수
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 6000; // 6초 (분당 10개 요청)
+const MIN_REQUEST_INTERVAL = 10000; // 10초 (분당 6개 요청 - 더 안전한 간격)
 
 // Rate limit을 고려한 대기 함수
 async function waitForRateLimit() {
@@ -141,12 +141,16 @@ async function getPlayerStats(playerId, playerName) {
             }
         }
         
+        // KDA 계산 (kills + assists / deaths)
+        const kda = mainStats.deaths > 0 ? 
+            ((mainStats.kills || 0) + (mainStats.assists || 0)) / mainStats.deaths :
+            (mainStats.kills || 0) + (mainStats.assists || 0);
+        
         return {
             // 일반 통계
             kills: mainStats.kills || 0,
             deaths: mainStats.deaths || 0,
-            kd: mainStats.deaths > 0 ? 
-                (mainStats.kills / mainStats.deaths).toFixed(2) : '0.00',
+            kd: kda.toFixed(2),
             avgDamage: mainStats.damageDealt && mainStats.roundsPlayed ? 
                 Math.round(mainStats.damageDealt / mainStats.roundsPlayed) : 0,
             wins: mainStats.wins || 0,

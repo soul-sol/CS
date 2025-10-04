@@ -210,6 +210,7 @@
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -226,6 +227,25 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        const auth = getAuth(app);
+        
+        // 익명 인증으로 자동 로그인
+        signInAnonymously(auth)
+            .then(() => {
+                console.log('익명 인증 성공');
+            })
+            .catch((error) => {
+                console.error('익명 인증 실패:', error);
+            });
+        
+        // 인증 상태 리스너
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('인증됨 - UID:', user.uid);
+            } else {
+                console.log('인증되지 않음');
+            }
+        });
         
         // Firebase를 전역으로 사용 가능하게 설정
         window.firebaseDB = {
