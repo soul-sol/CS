@@ -48,9 +48,20 @@ async function waitForRateLimit() {
     lastRequestTime = Date.now();
 }
 
-// 플레이어 ID 가져오기
-async function getPlayerId(playerName) {
+// 플레이어 ID 가져오기 (캐싱 지원)
+async function getPlayerId(playerName, memberKey = null) {
     try {
+        // memberKey가 있으면 먼저 캐시된 ID 확인
+        if (memberKey) {
+            const cachedIdSnapshot = await db.ref(`members/${memberKey}/playerId`).once('value');
+            const cachedId = cachedIdSnapshot.val();
+            if (cachedId) {
+                console.log(`  Using cached player ID for ${playerName}`);
+                return cachedId;
+            }
+        }
+        
+        // 캐시가 없으면 API 호출
         await waitForRateLimit(); // Rate limit 대기
         const response = await axios.get(
             `${API_BASE_URL}/players?filter[playerNames]=${encodeURIComponent(playerName)}`,
@@ -58,7 +69,15 @@ async function getPlayerId(playerName) {
         );
         
         if (response.data.data && response.data.data.length > 0) {
-            return response.data.data[0].id;
+            const playerId = response.data.data[0].id;
+            
+            // memberKey가 있으면 ID를 캐싱
+            if (memberKey) {
+                await db.ref(`members/${memberKey}/playerId`).set(playerId);
+                console.log(`  Cached player ID for ${playerName}`);
+            }
+            
+            return playerId;
         }
         return null;
     } catch (error) {
@@ -186,8 +205,8 @@ async function collectDailyStats() {
             const playerName = memberData.name;
             console.log(`Processing ${playerName}...`);
             
-            // 플레이어 ID 가져오기 (waitForRateLimit이 내부에 포함됨)
-            const playerId = await getPlayerId(playerName);
+            // 플레이어 ID 가져오기 (캐싱 지원, memberKey 전달)
+            const playerId = await getPlayerId(playerName, memberKey);
             if (!playerId) {
                 console.error(`Could not find player ID for ${playerName}`);
                 errors.push(`${playerName}: Player not found`);
